@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { Canvas } from '@react-three/fiber';
@@ -10,6 +10,14 @@ interface RobotState {
   x: number;
   y: number;
   rotation: number;
+}
+
+interface AnimationState extends RobotState {
+  targetX: number;
+  targetY: number;
+  targetRotation: number;
+  isAnimating: boolean;
+  currentCommand: string;
 }
 
 interface CompilationStatus {
@@ -22,6 +30,9 @@ interface Label {
   instructions: string[];
 }
 
+const ANIMATION_DURATION = 500; // 0.5 seconds per movement
+const INSTRUCTION_DELAY = 100; // 0.1 second between instructions
+
 const Robot = ({ position, rotation }: { position: [number, number, number], rotation: number }) => {
   return (
     <mesh position={position} rotation={[0, rotation, 0]}>
@@ -32,29 +43,82 @@ const Robot = ({ position, rotation }: { position: [number, number, number], rot
 };
 
 export default function RobotVisualizer() {
-  const [code, setCode] = useState(`// Robot Assembly Program
-// Define a circle movement pattern
+  const [code, setCode] = useState(`# Robot Assembly Program
+# Define a circle movement pattern
 
 circle:
-    mov direction, 1    // Turn left
-    mov forward, 4      // Move forward for 4 seconds
-    mov direction, 0    // Go straight
+    mov direction, 1    # Turn left
+    mov forward, 4      # Move forward for 4 seconds
+    mov direction, 0    # Go straight
 
 main:
-    jal circle          // Call the circle function
-    mov forward, 10     // Move forward for 10 seconds
-    jal circle          // Call the circle function again`);
+    jal circle          # Call the circle function
+    mov forward, 10     # Move forward for 10 seconds
+    jal circle          # Call the circle function again`);
 
-  const [robotState, setRobotState] = useState<RobotState>({
+  const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
     y: 0,
-    rotation: 0
+    rotation: 0,
+    targetX: 0,
+    targetY: 0,
+    targetRotation: 0,
+    isAnimating: false,
+    currentCommand: ''
   });
 
   const [compilationStatus, setCompilationStatus] = useState<CompilationStatus>({
     status: 'idle',
     message: 'Ready to compile'
   });
+
+  const animationFrame = useRef<number>();
+  const instructionQueue = useRef<(() => void)[]>([]);
+  const isExecuting = useRef(false);
+  const startTime = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current);
+      }
+    };
+  }, []);
+
+  const animate = (timestamp: number) => {
+    if (!robotState.isAnimating) return;
+
+    const progress = Math.min(1, (timestamp - startTime.current) / ANIMATION_DURATION);
+    const easeProgress = 1 - Math.pow(1 - progress, 2); // Smoother easing
+
+    setRobotState(prev => {
+      const newX = prev.x + (prev.targetX - prev.x) * easeProgress;
+      const newY = prev.y + (prev.targetY - prev.y) * easeProgress;
+      const newRotation = prev.rotation + (prev.targetRotation - prev.rotation) * easeProgress;
+
+      return {
+        ...prev,
+        x: newX,
+        y: newY,
+        rotation: newRotation,
+        isAnimating: progress < 1
+      };
+    });
+
+    if (progress < 1) {
+      animationFrame.current = requestAnimationFrame(animate);
+    } else {
+      // Ensure final position is exact
+      setRobotState(prev => ({
+        ...prev,
+        x: prev.targetX,
+        y: prev.targetY,
+        rotation: prev.targetRotation,
+        isAnimating: false
+      }));
+      setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
+    }
+  };
 
   const parseLabels = (code: string): Map<string, Label> => {
     const labels = new Map<string, Label>();
@@ -85,55 +149,103 @@ main:
   };
 
   const executeInstruction = (instruction: string) => {
-    const [cmd, ...params] = instruction.split(' ').filter(Boolean);
-    const args = params.join(' ').split(',').map(p => p.trim());
+    return new Promise<void>((resolve) => {
+      const [cmd, ...params] = instruction.split(' ').filter(Boolean);
+      const args = params.join(' ').split(',').map(p => p.trim());
 
-    switch (cmd.toLowerCase()) {
-      case 'mov': {
-        const [type, value] = args;
-        const numValue = parseFloat(value);
-        
-        if (type === 'direction') {
-          if (numValue === 1) { // Turn left
-            setRobotState(prev => ({ ...prev, rotation: prev.rotation + Math.PI / 2 }));
-          } else if (numValue === 0) { // Straight
-            // Keep current rotation
+      // Update current command display
+      setRobotState(prev => ({ ...prev, currentCommand: instruction }));
+
+      switch (cmd.toLowerCase()) {
+        case 'mov': {
+          const [type, value] = args;
+          const numValue = parseFloat(value);
+          
+          if (type === 'direction') {
+            if (numValue === 1) { // Turn left
+              setRobotState(prev => ({
+                ...prev,
+                targetRotation: prev.rotation + Math.PI / 2,
+                targetX: prev.x,
+                targetY: prev.y,
+                isAnimating: true
+              }));
+            } else if (numValue === 0) { // Straight
+              setRobotState(prev => ({
+                ...prev,
+                targetRotation: prev.rotation,
+                targetX: prev.x,
+                targetY: prev.y,
+                isAnimating: true
+              }));
+            }
+          } else if (type === 'forward') {
+            setRobotState(prev => {
+              const angle = prev.rotation;
+              return {
+                ...prev,
+                targetX: prev.x + Math.cos(angle) * numValue,
+                targetY: prev.y + Math.sin(angle) * numValue,
+                targetRotation: prev.rotation,
+                isAnimating: true
+              };
+            });
           }
-        } else if (type === 'forward') {
-          setRobotState(prev => {
-            const angle = prev.rotation;
-            return {
-              ...prev,
-              x: prev.x + Math.cos(angle) * numValue,
-              y: prev.y + Math.sin(angle) * numValue
-            };
-          });
+          
+          startTime.current = performance.now();
+          animationFrame.current = requestAnimationFrame(animate);
+
+          // Wait for animation to complete
+          const checkAnimation = () => {
+            if (robotState.isAnimating) {
+              setTimeout(checkAnimation, 50);
+            } else {
+              resolve();
+            }
+          };
+          setTimeout(checkAnimation, 50);
+          break;
         }
-        break;
+        default:
+          resolve();
+      }
+    });
+  };
+
+  const executeNextInstruction = async () => {
+    if (instructionQueue.current.length > 0 && !isExecuting.current) {
+      isExecuting.current = true;
+      const nextInstruction = instructionQueue.current.shift();
+      if (nextInstruction) {
+        await nextInstruction();
+      }
+      isExecuting.current = false;
+      if (instructionQueue.current.length > 0) {
+        setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
       }
     }
   };
 
-  const executeLabel = (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
+  const executeLabel = async (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
     if (executedLabels.has(label.name)) {
       throw new Error(`Recursive call detected: ${label.name}`);
     }
     
     executedLabels.add(label.name);
     
-    label.instructions.forEach(instruction => {
+    for (const instruction of label.instructions) {
       if (instruction.startsWith('jal')) {
         const targetLabel = instruction.split(' ')[1];
         const target = labels.get(targetLabel);
         if (target) {
-          executeLabel(target, labels, new Set(executedLabels));
+          await executeLabel(target, labels, new Set(executedLabels));
         } else {
           throw new Error(`Label not found: ${targetLabel}`);
         }
       } else {
-        executeInstruction(instruction);
+        await executeInstruction(instruction);
       }
-    });
+    }
   };
 
   const handleCompile = async () => {
@@ -141,7 +253,21 @@ main:
     
     try {
       // Reset robot state
-      setRobotState({ x: 0, y: 0, rotation: 0 });
+      setRobotState({
+        x: 0,
+        y: 0,
+        rotation: 0,
+        targetX: 0,
+        targetY: 0,
+        targetRotation: 0,
+        isAnimating: false,
+        currentCommand: ''
+      });
+      
+      // Clear any existing animation
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current);
+      }
       
       // Parse code first
       const labels = parseLabels(code);
@@ -159,7 +285,7 @@ main:
       await new Promise(resolve => setTimeout(resolve, 400));
       
       // Execute the program
-      executeLabel(mainLabel, labels);
+      await executeLabel(mainLabel, labels);
       
       setCompilationStatus({ 
         status: 'success', 
@@ -184,9 +310,9 @@ main:
         <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
           <button
             onClick={handleCompile}
-            disabled={compilationStatus.status === 'compiling'}
+            disabled={compilationStatus.status === 'compiling' || robotState.isAnimating}
             className={`px-6 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2
-              ${compilationStatus.status === 'compiling'
+              ${(compilationStatus.status === 'compiling' || robotState.isAnimating)
                 ? 'bg-accent/50 cursor-not-allowed'
                 : 'bg-accent hover:bg-accent/80'}`}
           >
@@ -208,6 +334,11 @@ main:
             }`} />
             <span className="text-sm text-gray-300">{compilationStatus.message}</span>
           </div>
+          {robotState.currentCommand && (
+            <div className="ml-auto text-sm text-gray-300">
+              Executing: <span className="text-white font-mono">{robotState.currentCommand}</span>
+            </div>
+          )}
         </div>
         <CodeMirror
           value={code}
