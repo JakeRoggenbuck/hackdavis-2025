@@ -66,7 +66,7 @@ fn test_compile_to_arduino() {
     assert!(output.contains("void setup()"));
     assert!(output.contains("void loop()"));
     assert!(output.contains("void circle()"));
-    assert!(output.contains("void main()"));
+    assert!(output.contains("void main_loop()"));
     assert!(output.contains("left();"));
     assert!(output.contains("forward(4);"));
     assert!(output.contains("straight();"));

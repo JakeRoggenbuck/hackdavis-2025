@@ -101,12 +101,12 @@ void backwards(float time){
     digitalWrite(in2, LOW);
 }
 
-void right (){
+void right(){
     digitalWrite(in3, LOW);
     digitalWrite(in4, HIGH);
 }
 
-void wait (float time){
+void wait(float time){
     digitalWrite(in1, LOW);
     digitalWrite(in2, LOW);
     float delayTime = time*1000;
@@ -114,7 +114,7 @@ void wait (float time){
     delay(delayLong);
 }
 
-void left (){
+void left(){
     digitalWrite(in4, LOW);
     digitalWrite(in3, HIGH);
 }
