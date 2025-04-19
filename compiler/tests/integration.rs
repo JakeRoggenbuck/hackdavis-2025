@@ -37,7 +37,7 @@ fn test_compile_to_arduino() {
     section start:
         mov forward, 10
         mov backward, 4
-        mov left, 0
+        mov direction, 1
         mov straight, 0
         mov wait, 2
     "#.to_string();

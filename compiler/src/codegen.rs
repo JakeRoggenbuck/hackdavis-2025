@@ -45,11 +45,12 @@ void loop() {
                 "backward" => {
                     output.push_str(&format!("    backwards({});\n", command.amount));
                 }
-                "left" => {
-                    output.push_str("    left();\n");
-                }
-                "right" => {
-                    output.push_str("    right();\n");
+                "direction" => {
+                    match command.amount {
+                        1 => output.push_str("    left();\n"),
+                        2 => output.push_str("    right();\n"),
+                        _ => panic!("Invalid direction value: {}", command.amount),
+                    }
                 }
                 "straight" => {
                     output.push_str("    straight();\n");
