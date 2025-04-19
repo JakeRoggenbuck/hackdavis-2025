@@ -1,55 +1,79 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Editor from '@monaco-editor/react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
+import dynamic from 'next/dynamic';
 import { FaSpinner, FaCheck } from 'react-icons/fa';
+
+// Dynamically import Monaco editor with no SSR
+const Editor = dynamic(() => import('@monaco-editor/react'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-gray-800 flex items-center justify-center">Loading editor...</div>
+});
+
+// Create a client-side only terminal component
+const TerminalComponent = dynamic(() => Promise.resolve(({ terminalRef }: { terminalRef: React.RefObject<HTMLDivElement | null> }) => {
+  const terminal = useRef<any>(null);
+  const fitAddon = useRef<any>(null);
+
+  useEffect(() => {
+    if (terminalRef.current) {
+      // Dynamically import XTerm.js and its addons
+      Promise.all([
+        import('xterm'),
+        import('xterm-addon-fit'),
+        import('xterm-addon-web-links')
+      ]).then(([xterm, fit, webLinks]) => {
+        // Initialize terminal
+        terminal.current = new xterm.Terminal({
+          cursorBlink: true,
+          theme: {
+            background: '#1e1e1e',
+            foreground: '#ffffff',
+          },
+        });
+
+        fitAddon.current = new fit.FitAddon();
+        terminal.current.loadAddon(fitAddon.current);
+        terminal.current.loadAddon(new webLinks.WebLinksAddon());
+
+        terminal.current.open(terminalRef.current);
+        fitAddon.current.fit();
+
+        // Add welcome message
+        terminal.current.writeln('Welcome to the IDE Terminal!');
+        terminal.current.writeln('Type your commands here...');
+
+        // Handle window resize
+        const handleResize = () => {
+          fitAddon.current?.fit();
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+          window.removeEventListener('resize', handleResize);
+          terminal.current?.dispose();
+        };
+      });
+    }
+  }, []);
+
+  return (
+    <div
+      ref={terminalRef}
+      className="h-full bg-gray-800 rounded-lg overflow-hidden"
+    />
+  );
+}), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-gray-800 flex items-center justify-center">Loading terminal...</div>
+});
 
 const IDE = () => {
   const [code, setCode] = useState<string>('// Start coding here...');
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
   const [isCompiled, setIsCompiled] = useState<boolean>(false);
   const terminalRef = useRef<HTMLDivElement>(null);
-  const terminal = useRef<Terminal | null>(null);
-  const fitAddon = useRef<FitAddon | null>(null);
-
-  useEffect(() => {
-    if (terminalRef.current) {
-      // Initialize terminal
-      terminal.current = new Terminal({
-        cursorBlink: true,
-        theme: {
-          background: '#1e1e1e',
-          foreground: '#ffffff',
-        },
-      });
-
-      fitAddon.current = new FitAddon();
-      terminal.current.loadAddon(fitAddon.current);
-      terminal.current.loadAddon(new WebLinksAddon());
-
-      terminal.current.open(terminalRef.current);
-      fitAddon.current.fit();
-
-      // Add welcome message
-      terminal.current.writeln('Welcome to the IDE Terminal!');
-      terminal.current.writeln('Type your commands here...');
-
-      // Handle window resize
-      const handleResize = () => {
-        fitAddon.current?.fit();
-      };
-
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        terminal.current?.dispose();
-      };
-    }
-  }, []);
 
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
@@ -116,10 +140,7 @@ const IDE = () => {
 
         {/* Terminal */}
         <div className="w-1/2 p-4">
-          <div
-            ref={terminalRef}
-            className="h-full bg-gray-800 rounded-lg overflow-hidden"
-          />
+          <TerminalComponent terminalRef={terminalRef} />
         </div>
       </div>
     </div>
