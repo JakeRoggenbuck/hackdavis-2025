@@ -6,12 +6,10 @@ section start:
     mov forward, 10
     mov backward, 4
     mov direction, 1
-    mov straight, 0
     mov wait, 2
-
-section two:
-    mov forward, 7
+    mov forward, 10
     mov direction, 2
+    mov forward, 10
 "#.to_string();
 
     println!("IR Output:");
