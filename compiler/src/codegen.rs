@@ -1,4 +1,4 @@
-use crate::ir::{Program, Section, Command};
+use crate::ir::{Program, Command};
 
 pub fn generate_arduino_code(program: &Program) -> String {
     let mut output = String::new();
@@ -33,40 +33,50 @@ void setup() {
 }
 
 void loop() {
+    main();
+}
+
 "#);
 
-    // Generate code for each section
+    // Generate functions for each section
     for section in &program.sections {
+        output.push_str(&format!("void {}() {{\n", section.name));
+        
         for command in &section.commands {
-            match command.r#type.as_str() {
-                "forward" => {
-                    output.push_str(&format!("    forward({});\n", command.amount));
-                }
-                "backward" => {
-                    output.push_str(&format!("    backwards({});\n", command.amount));
-                }
-                "direction" => {
-                    match command.amount {
-                        1 => output.push_str("    left();\n"),
-                        2 => output.push_str("    right();\n"),
-                        _ => panic!("Invalid direction value: {}", command.amount),
+            match command {
+                Command::Move { r#type, amount } => {
+                    match r#type.as_str() {
+                        "forward" => {
+                            output.push_str(&format!("    forward({});\n", amount));
+                        }
+                        "backward" => {
+                            output.push_str(&format!("    backwards({});\n", amount));
+                        }
+                        "direction" => {
+                            match amount {
+                                1 => output.push_str("    left();\n"),
+                                2 => output.push_str("    right();\n"),
+                                0 => output.push_str("    straight();\n"),
+                                _ => panic!("Invalid direction value: {}", amount),
+                            }
+                        }
+                        "wait" => {
+                            output.push_str(&format!("    wait({});\n", amount));
+                        }
+                        _ => panic!("Unknown command type: {}", r#type),
                     }
                 }
-                "straight" => {
-                    output.push_str("    straight();\n");
+                Command::Jump { label } => {
+                    output.push_str(&format!("    {}();\n", label));
                 }
-                "wait" => {
-                    output.push_str(&format!("    wait({});\n", command.amount));
-                }
-                _ => panic!("Unknown command type: {}", command.r#type),
             }
         }
+        
+        output.push_str("}\n\n");
     }
 
     // Add the motor control functions
-    output.push_str(r#"}
-
-void forward(float time){
+    output.push_str(r#"void forward(float time){
     digitalWrite(in1, HIGH);
     digitalWrite(in2, LOW);
     float delayTime = time*1000;

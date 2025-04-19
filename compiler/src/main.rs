@@ -2,14 +2,16 @@ use hackdavis_2025_compiler::{compile, compile_to_arduino};
 
 fn main() {
     let input = r#"
-section start:
-    mov forward, 10
-    mov backward, 4
+circle:
     mov direction, 1
-    mov wait, 2
+    mov forward, 4
+    mov direction, 0
+
+main:
+    jal circle
+    jal circle
     mov forward, 10
-    mov direction, 2
-    mov forward, 10
+    jal circle
 "#.to_string();
 
     println!("IR Output:");

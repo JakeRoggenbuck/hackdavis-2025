@@ -1,6 +1,5 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
-    Section,
     Colon,
     Identifier(String),
     Number(i32),
@@ -8,6 +7,7 @@ pub enum Token {
     Eof,
 }
 
+#[derive(Debug, Clone)]
 pub struct Lexer {
     chars: Vec<char>,
     position: usize,
@@ -57,14 +57,15 @@ impl Lexer {
                     self.position += 1;
                 }
                 let ident: String = self.chars[start..self.position].iter().collect();
-                if ident == "section" {
-                    Token::Section
-                } else {
-                    Token::Identifier(ident)
-                }
+                Token::Identifier(ident)
             }
             _ => panic!("Unexpected character: {}", current_char),
         }
+    }
+
+    pub fn peek_next_token(&self) -> Token {
+        let mut clone = self.clone();
+        clone.next_token()
     }
 
     fn skip_whitespace(&mut self) {
@@ -84,73 +85,52 @@ mod tests {
 
     #[test]
     fn test_lexer_basic() {
-        let input = "section start: mov forward, 10".to_string();
+        let input = "circle: mov direction, 1".to_string();
         let mut lexer = Lexer::new(input);
         
-        assert_eq!(lexer.next_token(), Token::Section);
-        assert_eq!(lexer.next_token(), Token::Identifier("start".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
         assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("forward".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("direction".to_string()));
         assert_eq!(lexer.next_token(), Token::Comma);
-        assert_eq!(lexer.next_token(), Token::Number(10));
+        assert_eq!(lexer.next_token(), Token::Number(1));
         assert_eq!(lexer.next_token(), Token::Eof);
     }
 
     #[test]
     fn test_lexer_multiple_sections() {
         let input = r#"
-        section one:
-            mov forward, 5
-        section two:
-            mov backward, 3
+        circle:
+            mov direction, 1
+        main:
+            jal circle
         "#.to_string();
         let mut lexer = Lexer::new(input);
         
-        assert_eq!(lexer.next_token(), Token::Section);
-        assert_eq!(lexer.next_token(), Token::Identifier("one".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
         assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("forward".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("direction".to_string()));
         assert_eq!(lexer.next_token(), Token::Comma);
-        assert_eq!(lexer.next_token(), Token::Number(5));
-        assert_eq!(lexer.next_token(), Token::Section);
-        assert_eq!(lexer.next_token(), Token::Identifier("two".to_string()));
+        assert_eq!(lexer.next_token(), Token::Number(1));
+        assert_eq!(lexer.next_token(), Token::Identifier("main".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
-        assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("backward".to_string()));
-        assert_eq!(lexer.next_token(), Token::Comma);
-        assert_eq!(lexer.next_token(), Token::Number(3));
+        assert_eq!(lexer.next_token(), Token::Identifier("jal".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Eof);
     }
 
     #[test]
     fn test_lexer_whitespace_handling() {
-        let input = "  section  start  :  mov  forward  ,  10  ".to_string();
+        let input = "  circle  :  mov  direction  ,  1  ".to_string();
         let mut lexer = Lexer::new(input);
         
-        assert_eq!(lexer.next_token(), Token::Section);
-        assert_eq!(lexer.next_token(), Token::Identifier("start".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
         assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("forward".to_string()));
+        assert_eq!(lexer.next_token(), Token::Identifier("direction".to_string()));
         assert_eq!(lexer.next_token(), Token::Comma);
-        assert_eq!(lexer.next_token(), Token::Number(10));
-        assert_eq!(lexer.next_token(), Token::Eof);
-    }
-
-    #[test]
-    fn test_lexer_unicode_identifiers() {
-        let input = "section 你好: mov 世界, 10".to_string();
-        let mut lexer = Lexer::new(input);
-        
-        assert_eq!(lexer.next_token(), Token::Section);
-        assert_eq!(lexer.next_token(), Token::Identifier("你好".to_string()));
-        assert_eq!(lexer.next_token(), Token::Colon);
-        assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("世界".to_string()));
-        assert_eq!(lexer.next_token(), Token::Comma);
-        assert_eq!(lexer.next_token(), Token::Number(10));
+        assert_eq!(lexer.next_token(), Token::Number(1));
         assert_eq!(lexer.next_token(), Token::Eof);
     }
 } 

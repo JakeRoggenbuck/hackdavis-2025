@@ -1,9 +1,14 @@
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Command {
-    pub r#type: String,
-    pub amount: i32,
+pub enum Command {
+    Move {
+        r#type: String,
+        amount: i32,
+    },
+    Jump {
+        label: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
