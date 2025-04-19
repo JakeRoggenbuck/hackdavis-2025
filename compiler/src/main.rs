@@ -12,7 +12,8 @@ main:
     jal circle
     mov forward, 10
     jal circle
-"#.to_string();
+"#
+    .to_string();
 
     println!("IR Output:");
     let ir_output = compile(input.clone());

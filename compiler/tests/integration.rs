@@ -7,7 +7,8 @@ fn test_compile_simple_program() {
         mov direction, 1
         mov forward, 4
         mov direction, 0
-    "#.to_string();
+    "#
+    .to_string();
 
     let output = compile(input);
     let expected = r#"{
@@ -37,7 +38,7 @@ fn test_compile_simple_program() {
     }
   ]
 }"#;
-    
+
     assert_eq!(output, expected);
 }
 
@@ -54,10 +55,11 @@ fn test_compile_to_arduino() {
         jal circle
         mov forward, 10
         jal circle
-    "#.to_string();
+    "#
+    .to_string();
 
     let output = compile_to_arduino(input);
-    
+
     // Check for key components in the generated Arduino code
     assert!(output.contains("int enA = 9;"));
     assert!(output.contains("int in1 = 3;"));
@@ -88,7 +90,8 @@ fn test_compile_multiple_sections() {
         jal circle
         mov forward, 10
         jal circle
-    "#.to_string();
+    "#
+    .to_string();
 
     let output = compile(input);
     let expected = r#"{
@@ -139,7 +142,7 @@ fn test_compile_multiple_sections() {
     }
   ]
 }"#;
-    
+
     assert_eq!(output, expected);
 }
 
@@ -147,7 +150,8 @@ fn test_compile_multiple_sections() {
 fn test_compile_empty_section() {
     let input = r#"
     empty:
-    "#.to_string();
+    "#
+    .to_string();
 
     let output = compile(input);
     let expected = r#"{
@@ -158,7 +162,7 @@ fn test_compile_empty_section() {
     }
   ]
 }"#;
-    
+
     assert_eq!(output, expected);
 }
 
@@ -168,7 +172,8 @@ fn test_compile_invalid_syntax() {
     let input = r#"
     invalid:
         mov forward 10  # Missing comma
-    "#.to_string();
+    "#
+    .to_string();
 
     compile(input);
 }

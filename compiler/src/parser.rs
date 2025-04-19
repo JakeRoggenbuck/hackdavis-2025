@@ -1,4 +1,4 @@
-use crate::ir::{Program, Section, Command};
+use crate::ir::{Command, Program, Section};
 use crate::lexer::{Lexer, Token};
 
 pub struct Parser {
@@ -18,7 +18,7 @@ impl Parser {
 
     pub fn parse(&mut self) -> Program {
         let mut sections = Vec::new();
-        
+
         while self.current_token != Token::Eof {
             sections.push(self.parse_section());
         }
@@ -131,15 +131,16 @@ mod tests {
             mov direction, 1
             mov forward, 4
             mov direction, 0
-        "#.to_string();
-        
+        "#
+        .to_string();
+
         let mut parser = Parser::new(input);
         let program = parser.parse();
-        
+
         assert_eq!(program.sections.len(), 1);
         assert_eq!(program.sections[0].name, "circle");
         assert_eq!(program.sections[0].commands.len(), 3);
-        
+
         if let Command::Move { r#type, amount } = &program.sections[0].commands[0] {
             assert_eq!(r#type, "direction");
             assert_eq!(*amount, 1);
@@ -154,19 +155,20 @@ mod tests {
         main:
             jal circle
             mov forward, 10
-        "#.to_string();
-        
+        "#
+        .to_string();
+
         let mut parser = Parser::new(input);
         let program = parser.parse();
-        
+
         assert_eq!(program.sections.len(), 1);
         assert_eq!(program.sections[0].name, "main");
         assert_eq!(program.sections[0].commands.len(), 2);
-        
+
         if let Command::Jump { label } = &program.sections[0].commands[0] {
             assert_eq!(label, "circle");
         } else {
             panic!("Expected Jump command");
         }
     }
-} 
+}

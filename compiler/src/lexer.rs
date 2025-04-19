@@ -23,13 +23,13 @@ impl Lexer {
 
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
-        
+
         if self.position >= self.chars.len() {
             return Token::Eof;
         }
 
         let current_char = self.chars[self.position];
-        
+
         match current_char {
             ':' => {
                 self.position += 1;
@@ -87,11 +87,14 @@ mod tests {
     fn test_lexer_basic() {
         let input = "circle: mov direction, 1".to_string();
         let mut lexer = Lexer::new(input);
-        
+
         assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
         assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("direction".to_string()));
+        assert_eq!(
+            lexer.next_token(),
+            Token::Identifier("direction".to_string())
+        );
         assert_eq!(lexer.next_token(), Token::Comma);
         assert_eq!(lexer.next_token(), Token::Number(1));
         assert_eq!(lexer.next_token(), Token::Eof);
@@ -104,13 +107,17 @@ mod tests {
             mov direction, 1
         main:
             jal circle
-        "#.to_string();
+        "#
+        .to_string();
         let mut lexer = Lexer::new(input);
-        
+
         assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
         assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("direction".to_string()));
+        assert_eq!(
+            lexer.next_token(),
+            Token::Identifier("direction".to_string())
+        );
         assert_eq!(lexer.next_token(), Token::Comma);
         assert_eq!(lexer.next_token(), Token::Number(1));
         assert_eq!(lexer.next_token(), Token::Identifier("main".to_string()));
@@ -124,13 +131,16 @@ mod tests {
     fn test_lexer_whitespace_handling() {
         let input = "  circle  :  mov  direction  ,  1  ".to_string();
         let mut lexer = Lexer::new(input);
-        
+
         assert_eq!(lexer.next_token(), Token::Identifier("circle".to_string()));
         assert_eq!(lexer.next_token(), Token::Colon);
         assert_eq!(lexer.next_token(), Token::Identifier("mov".to_string()));
-        assert_eq!(lexer.next_token(), Token::Identifier("direction".to_string()));
+        assert_eq!(
+            lexer.next_token(),
+            Token::Identifier("direction".to_string())
+        );
         assert_eq!(lexer.next_token(), Token::Comma);
         assert_eq!(lexer.next_token(), Token::Number(1));
         assert_eq!(lexer.next_token(), Token::Eof);
     }
-} 
+}

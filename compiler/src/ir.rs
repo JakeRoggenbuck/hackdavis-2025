@@ -1,14 +1,9 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Command {
-    Move {
-        r#type: String,
-        amount: i32,
-    },
-    Jump {
-        label: String,
-    },
+    Move { r#type: String, amount: i32 },
+    Jump { label: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,4 +15,4 @@ pub struct Section {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Program {
     pub sections: Vec<Section>,
-} 
+}
