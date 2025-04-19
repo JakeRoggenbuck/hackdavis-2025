@@ -84,7 +84,7 @@ void loop() {
         r#"void forward(float time){
     digitalWrite(in1, HIGH);
     digitalWrite(in2, LOW);
-    float delayTime = time*1000;
+    float delayTime = (time*1000)/2;  // Convert to milliseconds and make 2x faster
     long delayLong = (long)delayTime;
     delay(delayLong);    
     digitalWrite(in1, LOW);
@@ -94,7 +94,7 @@ void loop() {
 void backwards(float time){
     digitalWrite(in2, HIGH);
     digitalWrite(in1, LOW);
-    float delayTime = time*1000;
+    float delayTime = (time*1000)/2;  // Convert to milliseconds and make 2x faster
     long delayLong = (long)delayTime;
     delay(delayLong);
     digitalWrite(in1, LOW);
@@ -109,7 +109,7 @@ void right(){
 void wait(float time){
     digitalWrite(in1, LOW);
     digitalWrite(in2, LOW);
-    float delayTime = time*1000;
+    float delayTime = (time*1000)/2;  // Convert to milliseconds and make 2x faster
     long delayLong = (long)delayTime;
     delay(delayLong);
 }
