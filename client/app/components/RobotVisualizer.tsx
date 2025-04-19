@@ -12,6 +12,16 @@ interface RobotState {
   rotation: number;
 }
 
+interface CompilationStatus {
+  status: 'idle' | 'compiling' | 'success' | 'error';
+  message: string;
+}
+
+interface Label {
+  name: string;
+  instructions: string[];
+}
+
 const Robot = ({ position, rotation }: { position: [number, number, number], rotation: number }) => {
   return (
     <mesh position={position} rotation={[0, rotation, 0]}>
@@ -22,12 +32,18 @@ const Robot = ({ position, rotation }: { position: [number, number, number], rot
 };
 
 export default function RobotVisualizer() {
-  const [code, setCode] = useState(`// Write your robot commands here
-// Example:
-// add forward, 5
-// add left, 10
-// add backward, 100
-// add right, 20`);
+  const [code, setCode] = useState(`// Robot Assembly Program
+// Define a circle movement pattern
+
+circle:
+    mov direction, 1    // Turn left
+    mov forward, 4      // Move forward for 4 seconds
+    mov direction, 0    // Go straight
+
+main:
+    jal circle          // Call the circle function
+    mov forward, 10     // Move forward for 10 seconds
+    jal circle          // Call the circle function again`);
 
   const [robotState, setRobotState] = useState<RobotState>({
     x: 0,
@@ -35,51 +51,171 @@ export default function RobotVisualizer() {
     rotation: 0
   });
 
-  const executeCommand = (command: string) => {
-    const parts = command.trim().split(',').map(part => part.trim());
-    if (parts.length !== 2) return;
+  const [compilationStatus, setCompilationStatus] = useState<CompilationStatus>({
+    status: 'idle',
+    message: 'Ready to compile'
+  });
 
-    const [action, valueStr] = parts[0].split(' ');
-    const value = parseFloat(valueStr);
+  const parseLabels = (code: string): Map<string, Label> => {
+    const labels = new Map<string, Label>();
+    let currentLabel: Label | null = null;
+    
+    code.split('\n').forEach(line => {
+      const trimmedLine = line.trim();
+      
+      // Skip empty lines and comments
+      if (!trimmedLine || trimmedLine.startsWith('#')) return;
+      
+      // Check if line is a label
+      if (trimmedLine.endsWith(':')) {
+        const labelName = trimmedLine.slice(0, -1);
+        currentLabel = { name: labelName, instructions: [] };
+        labels.set(labelName, currentLabel);
+      } 
+      // Add instruction to current label
+      else if (currentLabel && trimmedLine) {
+        const instruction = trimmedLine.split('#')[0].trim(); // Remove comments
+        if (instruction) {
+          currentLabel.instructions.push(instruction);
+        }
+      }
+    });
+    
+    return labels;
+  };
 
-    switch (action) {
-      case 'add forward':
-        setRobotState(prev => ({ ...prev, y: prev.y + value }));
+  const executeInstruction = (instruction: string) => {
+    const [cmd, ...params] = instruction.split(' ').filter(Boolean);
+    const args = params.join(' ').split(',').map(p => p.trim());
+
+    switch (cmd.toLowerCase()) {
+      case 'mov': {
+        const [type, value] = args;
+        const numValue = parseFloat(value);
+        
+        if (type === 'direction') {
+          if (numValue === 1) { // Turn left
+            setRobotState(prev => ({ ...prev, rotation: prev.rotation + Math.PI / 2 }));
+          } else if (numValue === 0) { // Straight
+            // Keep current rotation
+          }
+        } else if (type === 'forward') {
+          setRobotState(prev => {
+            const angle = prev.rotation;
+            return {
+              ...prev,
+              x: prev.x + Math.cos(angle) * numValue,
+              y: prev.y + Math.sin(angle) * numValue
+            };
+          });
+        }
         break;
-      case 'add backward':
-        setRobotState(prev => ({ ...prev, y: prev.y - value }));
-        break;
-      case 'add left':
-        setRobotState(prev => ({ ...prev, x: prev.x - value }));
-        break;
-      case 'add right':
-        setRobotState(prev => ({ ...prev, x: prev.x + value }));
-        break;
+      }
+    }
+  };
+
+  const executeLabel = (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
+    if (executedLabels.has(label.name)) {
+      throw new Error(`Recursive call detected: ${label.name}`);
+    }
+    
+    executedLabels.add(label.name);
+    
+    label.instructions.forEach(instruction => {
+      if (instruction.startsWith('jal')) {
+        const targetLabel = instruction.split(' ')[1];
+        const target = labels.get(targetLabel);
+        if (target) {
+          executeLabel(target, labels, new Set(executedLabels));
+        } else {
+          throw new Error(`Label not found: ${targetLabel}`);
+        }
+      } else {
+        executeInstruction(instruction);
+      }
+    });
+  };
+
+  const handleCompile = async () => {
+    setCompilationStatus({ status: 'compiling', message: 'Analyzing code structure...' });
+    
+    try {
+      // Reset robot state
+      setRobotState({ x: 0, y: 0, rotation: 0 });
+      
+      // Parse code first
+      const labels = parseLabels(code);
+      
+      setCompilationStatus({ status: 'compiling', message: 'Validating program structure...' });
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Validate main exists
+      const mainLabel = labels.get('main');
+      if (!mainLabel) {
+        throw new Error('Program must contain a main label');
+      }
+
+      setCompilationStatus({ status: 'compiling', message: 'Executing program...' });
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Execute the program
+      executeLabel(mainLabel, labels);
+      
+      setCompilationStatus({ 
+        status: 'success', 
+        message: `Program compiled and executed successfully ✓`
+      });
+    } catch (error) {
+      setCompilationStatus({ 
+        status: 'error', 
+        message: error instanceof Error ? error.message : 'Error compiling code' 
+      });
     }
   };
 
   const handleCodeChange = (value: string) => {
     setCode(value);
-    // Reset robot state
-    setRobotState({ x: 0, y: 0, rotation: 0 });
-    // Execute each command
-    value.split('\n').forEach(line => {
-      if (line.trim().startsWith('add')) {
-        executeCommand(line);
-      }
-    });
+    setCompilationStatus({ status: 'idle', message: 'Ready to compile' });
   };
 
   return (
     <div className="flex w-full h-screen">
-      <div className="w-1/2 p-4 bg-secondary">
+      <div className="w-1/2 p-4 bg-secondary flex flex-col">
+        <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
+          <button
+            onClick={handleCompile}
+            disabled={compilationStatus.status === 'compiling'}
+            className={`px-6 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2
+              ${compilationStatus.status === 'compiling'
+                ? 'bg-accent/50 cursor-not-allowed'
+                : 'bg-accent hover:bg-accent/80'}`}
+          >
+            {compilationStatus.status === 'compiling' ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                Compiling...
+              </>
+            ) : (
+              'Compile'
+            )}
+          </button>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              compilationStatus.status === 'idle' ? 'bg-gray-400' :
+              compilationStatus.status === 'compiling' ? 'bg-yellow-400' :
+              compilationStatus.status === 'success' ? 'bg-green-400' :
+              'bg-red-400'
+            }`} />
+            <span className="text-sm text-gray-300">{compilationStatus.message}</span>
+          </div>
+        </div>
         <CodeMirror
           value={code}
-          height="100%"
+          height="calc(100% - 60px)"
           theme="dark"
           extensions={[javascript()]}
           onChange={handleCodeChange}
-          className="h-full rounded-lg overflow-hidden"
+          className="rounded-b-lg overflow-hidden"
         />
       </div>
       <div className="w-1/2 bg-primary">
