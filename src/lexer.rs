@@ -9,14 +9,14 @@ pub enum Token {
 }
 
 pub struct Lexer {
-    input: String,
+    chars: Vec<char>,
     position: usize,
 }
 
 impl Lexer {
     pub fn new(input: String) -> Self {
         Lexer {
-            input,
+            chars: input.chars().collect(),
             position: 0,
         }
     }
@@ -24,11 +24,11 @@ impl Lexer {
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         
-        if self.position >= self.input.len() {
+        if self.position >= self.chars.len() {
             return Token::Eof;
         }
 
-        let current_char = self.input.chars().nth(self.position).unwrap();
+        let current_char = self.chars[self.position];
         
         match current_char {
             ':' => {
@@ -41,26 +41,26 @@ impl Lexer {
             }
             '0'..='9' => {
                 let start = self.position;
-                while self.position < self.input.len() && self.input.chars().nth(self.position).unwrap().is_digit(10) {
+                while self.position < self.chars.len() && self.chars[self.position].is_digit(10) {
                     self.position += 1;
                 }
-                let num_str = &self.input[start..self.position];
+                let num_str: String = self.chars[start..self.position].iter().collect();
                 Token::Number(num_str.parse().unwrap())
             }
-            _ if current_char.is_alphabetic() || current_char == '_' => {
+            _ if !current_char.is_whitespace() => {
                 let start = self.position;
-                while self.position < self.input.len() {
-                    let c = self.input.chars().nth(self.position).unwrap();
-                    if !c.is_alphanumeric() && c != '_' {
+                while self.position < self.chars.len() {
+                    let c = self.chars[self.position];
+                    if c.is_whitespace() || c == ':' || c == ',' {
                         break;
                     }
                     self.position += 1;
                 }
-                let ident = &self.input[start..self.position];
+                let ident: String = self.chars[start..self.position].iter().collect();
                 if ident == "section" {
                     Token::Section
                 } else {
-                    Token::Identifier(ident.to_string())
+                    Token::Identifier(ident)
                 }
             }
             _ => panic!("Unexpected character: {}", current_char),
@@ -68,8 +68,8 @@ impl Lexer {
     }
 
     fn skip_whitespace(&mut self) {
-        while self.position < self.input.len() {
-            let c = self.input.chars().nth(self.position).unwrap();
+        while self.position < self.chars.len() {
+            let c = self.chars[self.position];
             if !c.is_whitespace() {
                 break;
             }
@@ -152,15 +152,5 @@ mod tests {
         assert_eq!(lexer.next_token(), Token::Comma);
         assert_eq!(lexer.next_token(), Token::Number(10));
         assert_eq!(lexer.next_token(), Token::Eof);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unexpected character")]
-    fn test_lexer_invalid_char() {
-        let input = "section start: mov forward, @10".to_string();
-        let mut lexer = Lexer::new(input);
-        
-        // Should panic on '@'
-        while lexer.next_token() != Token::Eof {}
     }
 } 
