@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 26, 26, 26;
+  --background-end-rgb: 42, 42, 42;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--background-start-rgb)),
+    rgb(var(--background-end-rgb))
+  );
+  margin: 0;
+  min-height: 100vh;
+}
+
+.cm-editor {
+  height: 100% !important;
+  font-family: 'Fira Code', monospace;
+}
+
+.cm-editor .cm-scroller {
+  line-height: 1.6;
+} 
