@@ -34,7 +34,7 @@ void setup() {
 }
 
 void loop() {
-    main();
+    main_loop();
 }
 
 "#,
@@ -42,30 +42,36 @@ void loop() {
 
     // Generate functions for each section
     for section in &program.sections {
-        output.push_str(&format!("void {}() {{\n", section.name));
+        let section_name = if section.name == "main" { "main_loop" } else { &section.name };
+        output.push_str(&format!("void {}() {{\n", section_name));
 
         for command in &section.commands {
             match command {
-                Command::Move { r#type, amount } => match r#type.as_str() {
-                    "forward" => {
-                        output.push_str(&format!("    forward({});\n", amount));
+                Command::Move { r#type, amount } => {
+                    match r#type.as_str() {
+                        "forward" => {
+                            output.push_str(&format!("    forward({});\n", amount));
+                        }
+                        "backward" => {
+                            output.push_str(&format!("    backwards({});\n", amount));
+                        }
+                        "direction" => {
+                            match amount {
+                                1 => output.push_str("    left();\n"),
+                                2 => output.push_str("    right();\n"),
+                                0 => output.push_str("    straight();\n"),
+                                _ => panic!("Invalid direction value: {}", amount),
+                            }
+                        }
+                        "wait" => {
+                            output.push_str(&format!("    wait({});\n", amount));
+                        }
+                        _ => panic!("Unknown command type: {}", r#type),
                     }
-                    "backward" => {
-                        output.push_str(&format!("    backwards({});\n", amount));
-                    }
-                    "direction" => match amount {
-                        1 => output.push_str("    left();\n"),
-                        2 => output.push_str("    right();\n"),
-                        0 => output.push_str("    straight();\n"),
-                        _ => panic!("Invalid direction value: {}", amount),
-                    },
-                    "wait" => {
-                        output.push_str(&format!("    wait({});\n", amount));
-                    }
-                    _ => panic!("Unknown command type: {}", r#type),
-                },
+                }
                 Command::Jump { label } => {
-                    output.push_str(&format!("    {}();\n", label));
+                    let target_name = if label == "main" { "main_loop" } else { label };
+                    output.push_str(&format!("    {}();\n", target_name));
                 }
             }
         }
