@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { Canvas } from '@react-three/fiber';
@@ -12,13 +12,6 @@ interface RobotState {
   rotation: number;
 }
 
-interface AnimationState extends RobotState {
-  targetX: number;
-  targetY: number;
-  targetRotation: number;
-  isAnimating: boolean;
-}
-
 interface CompilationStatus {
   status: 'idle' | 'compiling' | 'success' | 'error';
   message: string;
@@ -28,9 +21,6 @@ interface Label {
   name: string;
   instructions: string[];
 }
-
-const ANIMATION_DURATION = 1000; // 1 second per movement
-const INSTRUCTION_DELAY = 200; // 0.2 second between instructions
 
 const Robot = ({ position, rotation }: { position: [number, number, number], rotation: number }) => {
   return (
@@ -55,56 +45,16 @@ main:
     mov forward, 10     // Move forward for 10 seconds
     jal circle          // Call the circle function again`);
 
-  const [robotState, setRobotState] = useState<AnimationState>({
+  const [robotState, setRobotState] = useState<RobotState>({
     x: 0,
     y: 0,
-    rotation: 0,
-    targetX: 0,
-    targetY: 0,
-    targetRotation: 0,
-    isAnimating: false
+    rotation: 0
   });
 
   const [compilationStatus, setCompilationStatus] = useState<CompilationStatus>({
     status: 'idle',
     message: 'Ready to compile'
   });
-
-  const animationFrame = useRef<number>();
-  const instructionQueue = useRef<(() => void)[]>([]);
-  const isExecuting = useRef(false);
-
-  useEffect(() => {
-    return () => {
-      if (animationFrame.current) {
-        cancelAnimationFrame(animationFrame.current);
-      }
-    };
-  }, []);
-
-  const animate = (timestamp: number) => {
-    if (!robotState.isAnimating) return;
-
-    const progress = Math.min(1, (timestamp - startTime.current) / ANIMATION_DURATION);
-    const easeProgress = progress * (2 - progress); // easeOut quad
-
-    setRobotState(prev => ({
-      ...prev,
-      x: prev.x + (prev.targetX - prev.x) * easeProgress,
-      y: prev.y + (prev.targetY - prev.y) * easeProgress,
-      rotation: prev.rotation + (prev.targetRotation - prev.rotation) * easeProgress,
-      isAnimating: progress < 1
-    }));
-
-    if (progress < 1) {
-      animationFrame.current = requestAnimationFrame(animate);
-    } else {
-      // Execute next instruction if available
-      setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
-    }
-  };
-
-  const startTime = useRef(0);
 
   const parseLabels = (code: string): Map<string, Label> => {
     const labels = new Map<string, Label>();
@@ -114,7 +64,7 @@ main:
       const trimmedLine = line.trim();
       
       // Skip empty lines and comments
-      if (!trimmedLine || trimmedLine.startsWith('//')) return;
+      if (!trimmedLine || trimmedLine.startsWith('#')) return;
       
       // Check if line is a label
       if (trimmedLine.endsWith(':')) {
@@ -124,7 +74,7 @@ main:
       } 
       // Add instruction to current label
       else if (currentLabel && trimmedLine) {
-        const instruction = trimmedLine.split('//')[0].trim(); // Remove comments
+        const instruction = trimmedLine.split('#')[0].trim(); // Remove comments
         if (instruction) {
           currentLabel.instructions.push(instruction);
         }
@@ -135,89 +85,55 @@ main:
   };
 
   const executeInstruction = (instruction: string) => {
-    return new Promise<void>((resolve) => {
-      const [cmd, ...params] = instruction.split(' ').filter(Boolean);
-      const args = params.join(' ').split(',').map(p => p.trim());
+    const [cmd, ...params] = instruction.split(' ').filter(Boolean);
+    const args = params.join(' ').split(',').map(p => p.trim());
 
-      switch (cmd.toLowerCase()) {
-        case 'mov': {
-          const [type, value] = args;
-          const numValue = parseFloat(value);
-          
+    switch (cmd.toLowerCase()) {
+      case 'mov': {
+        const [type, value] = args;
+        const numValue = parseFloat(value);
+        
+        if (type === 'direction') {
+          if (numValue === 1) { // Turn left
+            setRobotState(prev => ({ ...prev, rotation: prev.rotation + Math.PI / 2 }));
+          } else if (numValue === 0) { // Straight
+            // Keep current rotation
+          }
+        } else if (type === 'forward') {
           setRobotState(prev => {
-            const newState = { ...prev, isAnimating: true };
-            
-            if (type === 'direction') {
-              if (numValue === 1) { // Turn left
-                newState.targetRotation = prev.rotation + Math.PI / 2;
-              } else if (numValue === 0) { // Straight
-                newState.targetRotation = prev.rotation;
-              }
-              newState.targetX = prev.x;
-              newState.targetY = prev.y;
-            } else if (type === 'forward') {
-              const angle = prev.rotation;
-              newState.targetX = prev.x + Math.cos(angle) * numValue;
-              newState.targetY = prev.y + Math.sin(angle) * numValue;
-              newState.targetRotation = prev.rotation;
-            }
-            
-            startTime.current = performance.now();
-            animationFrame.current = requestAnimationFrame(animate);
-            
-            return newState;
+            const angle = prev.rotation;
+            return {
+              ...prev,
+              x: prev.x + Math.cos(angle) * numValue,
+              y: prev.y + Math.sin(angle) * numValue
+            };
           });
-
-          const checkAnimation = () => {
-            if (robotState.isAnimating) {
-              setTimeout(checkAnimation, 100);
-            } else {
-              resolve();
-            }
-          };
-          checkAnimation();
-          break;
         }
-        default:
-          resolve();
-      }
-    });
-  };
-
-  const executeNextInstruction = async () => {
-    if (instructionQueue.current.length > 0 && !isExecuting.current) {
-      isExecuting.current = true;
-      const nextInstruction = instructionQueue.current.shift();
-      if (nextInstruction) {
-        await nextInstruction();
-      }
-      isExecuting.current = false;
-      if (instructionQueue.current.length > 0) {
-        setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
+        break;
       }
     }
   };
 
-  const executeLabel = async (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
+  const executeLabel = (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
     if (executedLabels.has(label.name)) {
       throw new Error(`Recursive call detected: ${label.name}`);
     }
     
     executedLabels.add(label.name);
     
-    for (const instruction of label.instructions) {
+    label.instructions.forEach(instruction => {
       if (instruction.startsWith('jal')) {
         const targetLabel = instruction.split(' ')[1];
         const target = labels.get(targetLabel);
         if (target) {
-          await executeLabel(target, labels, new Set(executedLabels));
+          executeLabel(target, labels, new Set(executedLabels));
         } else {
           throw new Error(`Label not found: ${targetLabel}`);
         }
       } else {
-        await executeInstruction(instruction);
+        executeInstruction(instruction);
       }
-    }
+    });
   };
 
   const handleCompile = async () => {
@@ -225,20 +141,7 @@ main:
     
     try {
       // Reset robot state
-      setRobotState({
-        x: 0,
-        y: 0,
-        rotation: 0,
-        targetX: 0,
-        targetY: 0,
-        targetRotation: 0,
-        isAnimating: false
-      });
-      
-      // Clear any existing animation
-      if (animationFrame.current) {
-        cancelAnimationFrame(animationFrame.current);
-      }
+      setRobotState({ x: 0, y: 0, rotation: 0 });
       
       // Parse code first
       const labels = parseLabels(code);
@@ -256,7 +159,7 @@ main:
       await new Promise(resolve => setTimeout(resolve, 400));
       
       // Execute the program
-      await executeLabel(mainLabel, labels);
+      executeLabel(mainLabel, labels);
       
       setCompilationStatus({ 
         status: 'success', 
@@ -281,9 +184,9 @@ main:
         <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
           <button
             onClick={handleCompile}
-            disabled={compilationStatus.status === 'compiling' || robotState.isAnimating}
+            disabled={compilationStatus.status === 'compiling'}
             className={`px-6 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2
-              ${(compilationStatus.status === 'compiling' || robotState.isAnimating)
+              ${compilationStatus.status === 'compiling'
                 ? 'bg-accent/50 cursor-not-allowed'
                 : 'bg-accent hover:bg-accent/80'}`}
           >
