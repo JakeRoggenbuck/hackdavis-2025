@@ -4,7 +4,8 @@ pub fn generate_arduino_code(program: &Program) -> String {
     let mut output = String::new();
     
     // Add the motor pin definitions and setup code
-    output.push_str(r#"// Motor A connections
+    output.push_str(r#"// Automatically Generated From IR
+// Motor A connections
 int enA = 9;
 int in1 = 3;
 int in2 = 4;
@@ -63,7 +64,6 @@ void loop() {
 
     // Add the motor control functions
     output.push_str(r#"}
-}
 
 void forward(float time){
     digitalWrite(in1, HIGH);
