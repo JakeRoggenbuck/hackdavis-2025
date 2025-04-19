@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
@@ -27,8 +29,8 @@ interface Label {
   instructions: string[];
 }
 
-const ANIMATION_DURATION = 2000; // 2 seconds per movement
-const INSTRUCTION_DELAY = 500; // 0.5 second between instructions
+const ANIMATION_DURATION = 1000; // 1 second per movement
+const INSTRUCTION_DELAY = 200; // 0.2 second between instructions
 
 const Robot = ({ position, rotation }: { position: [number, number, number], rotation: number }) => {
   return (
@@ -71,7 +73,6 @@ main:
   const animationFrame = useRef<number>();
   const instructionQueue = useRef<(() => void)[]>([]);
   const isExecuting = useRef(false);
-  const startTime = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -85,36 +86,25 @@ main:
     if (!robotState.isAnimating) return;
 
     const progress = Math.min(1, (timestamp - startTime.current) / ANIMATION_DURATION);
-    const easeProgress = 1 - Math.pow(1 - progress, 2); // Smoother easing
+    const easeProgress = progress * (2 - progress); // easeOut quad
 
-    setRobotState(prev => {
-      const newX = prev.x + (prev.targetX - prev.x) * easeProgress;
-      const newY = prev.y + (prev.targetY - prev.y) * easeProgress;
-      const newRotation = prev.rotation + (prev.targetRotation - prev.rotation) * easeProgress;
-
-      return {
-        ...prev,
-        x: newX,
-        y: newY,
-        rotation: newRotation,
-        isAnimating: progress < 1
-      };
-    });
+    setRobotState(prev => ({
+      ...prev,
+      x: prev.x + (prev.targetX - prev.x) * easeProgress,
+      y: prev.y + (prev.targetY - prev.y) * easeProgress,
+      rotation: prev.rotation + (prev.targetRotation - prev.rotation) * easeProgress,
+      isAnimating: progress < 1
+    }));
 
     if (progress < 1) {
       animationFrame.current = requestAnimationFrame(animate);
     } else {
-      // Ensure final position is exact
-      setRobotState(prev => ({
-        ...prev,
-        x: prev.targetX,
-        y: prev.targetY,
-        rotation: prev.targetRotation,
-        isAnimating: false
-      }));
+      // Execute next instruction if available
       setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
     }
   };
+
+  const startTime = useRef(0);
 
   const parseLabels = (code: string): Map<string, Label> => {
     const labels = new Map<string, Label>();
@@ -154,49 +144,38 @@ main:
           const [type, value] = args;
           const numValue = parseFloat(value);
           
-          if (type === 'direction') {
-            if (numValue === 1) { // Turn left
-              setRobotState(prev => ({
-                ...prev,
-                targetRotation: prev.rotation + Math.PI / 2,
-                targetX: prev.x,
-                targetY: prev.y,
-                isAnimating: true
-              }));
-            } else if (numValue === 0) { // Straight
-              setRobotState(prev => ({
-                ...prev,
-                targetRotation: prev.rotation,
-                targetX: prev.x,
-                targetY: prev.y,
-                isAnimating: true
-              }));
-            }
-          } else if (type === 'forward') {
-            setRobotState(prev => {
+          setRobotState(prev => {
+            const newState = { ...prev, isAnimating: true };
+            
+            if (type === 'direction') {
+              if (numValue === 1) { // Turn left
+                newState.targetRotation = prev.rotation + Math.PI / 2;
+              } else if (numValue === 0) { // Straight
+                newState.targetRotation = prev.rotation;
+              }
+              newState.targetX = prev.x;
+              newState.targetY = prev.y;
+            } else if (type === 'forward') {
               const angle = prev.rotation;
-              return {
-                ...prev,
-                targetX: prev.x + Math.cos(angle) * numValue,
-                targetY: prev.y + Math.sin(angle) * numValue,
-                targetRotation: prev.rotation,
-                isAnimating: true
-              };
-            });
-          }
-          
-          startTime.current = performance.now();
-          animationFrame.current = requestAnimationFrame(animate);
+              newState.targetX = prev.x + Math.cos(angle) * numValue;
+              newState.targetY = prev.y + Math.sin(angle) * numValue;
+              newState.targetRotation = prev.rotation;
+            }
+            
+            startTime.current = performance.now();
+            animationFrame.current = requestAnimationFrame(animate);
+            
+            return newState;
+          });
 
-          // Wait for animation to complete
           const checkAnimation = () => {
             if (robotState.isAnimating) {
-              setTimeout(checkAnimation, 50);
+              setTimeout(checkAnimation, 100);
             } else {
               resolve();
             }
           };
-          setTimeout(checkAnimation, 50);
+          checkAnimation();
           break;
         }
         default:
@@ -291,8 +270,8 @@ main:
     }
   };
 
-  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCode(e.target.value);
+  const handleCodeChange = (value: string) => {
+    setCode(value);
     setCompilationStatus({ status: 'idle', message: 'Ready to compile' });
   };
 
@@ -327,11 +306,13 @@ main:
             <span className="text-sm text-gray-300">{compilationStatus.message}</span>
           </div>
         </div>
-        <textarea
+        <CodeMirror
           value={code}
+          height="calc(100% - 60px)"
+          theme="dark"
+          extensions={[javascript()]}
           onChange={handleCodeChange}
-          className="w-full h-full bg-[#1e1e1e] text-white p-4 font-mono rounded-b-lg resize-none focus:outline-none"
-          style={{ height: 'calc(100% - 60px)' }}
+          className="rounded-b-lg overflow-hidden"
         />
       </div>
       <div className="w-1/2 bg-primary">
