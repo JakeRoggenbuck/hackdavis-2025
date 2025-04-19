@@ -73,9 +73,8 @@ main:
   });
 
   const animationFrame = useRef<number>();
-  const instructionQueue = useRef<(() => void)[]>([]);
-  const isExecuting = useRef(false);
   const startTime = useRef(0);
+  const isAnimating = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -86,7 +85,7 @@ main:
   }, []);
 
   const animate = (timestamp: number) => {
-    if (!robotState.isAnimating) return;
+    if (!isAnimating.current) return;
 
     const progress = Math.min(1, (timestamp - startTime.current) / ANIMATION_DURATION);
     const easeProgress = 1 - Math.pow(1 - progress, 2); // Smoother easing
@@ -108,7 +107,7 @@ main:
     if (progress < 1) {
       animationFrame.current = requestAnimationFrame(animate);
     } else {
-      // Ensure final position is exact
+      isAnimating.current = false;
       setRobotState(prev => ({
         ...prev,
         x: prev.targetX,
@@ -116,7 +115,6 @@ main:
         rotation: prev.targetRotation,
         isAnimating: false
       }));
-      setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
     }
   };
 
@@ -148,7 +146,7 @@ main:
     return labels;
   };
 
-  const executeInstruction = (instruction: string) => {
+  const executeInstruction = async (instruction: string) => {
     return new Promise<void>((resolve) => {
       const [cmd, ...params] = instruction.split(' ').filter(Boolean);
       const args = params.join(' ').split(',').map(p => p.trim());
@@ -192,12 +190,13 @@ main:
             });
           }
           
+          isAnimating.current = true;
           startTime.current = performance.now();
           animationFrame.current = requestAnimationFrame(animate);
 
           // Wait for animation to complete
           const checkAnimation = () => {
-            if (robotState.isAnimating) {
+            if (isAnimating.current) {
               setTimeout(checkAnimation, 50);
             } else {
               resolve();
@@ -210,20 +209,6 @@ main:
           resolve();
       }
     });
-  };
-
-  const executeNextInstruction = async () => {
-    if (instructionQueue.current.length > 0 && !isExecuting.current) {
-      isExecuting.current = true;
-      const nextInstruction = instructionQueue.current.shift();
-      if (nextInstruction) {
-        await nextInstruction();
-      }
-      isExecuting.current = false;
-      if (instructionQueue.current.length > 0) {
-        setTimeout(executeNextInstruction, INSTRUCTION_DELAY);
-      }
-    }
   };
 
   const executeLabel = async (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
@@ -244,6 +229,8 @@ main:
         }
       } else {
         await executeInstruction(instruction);
+        // Add a small delay between instructions
+        await new Promise(resolve => setTimeout(resolve, INSTRUCTION_DELAY));
       }
     }
   };
@@ -268,6 +255,7 @@ main:
       if (animationFrame.current) {
         cancelAnimationFrame(animationFrame.current);
       }
+      isAnimating.current = false;
       
       // Parse code first
       const labels = parseLabels(code);
@@ -354,7 +342,7 @@ main:
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
           <Robot 
-            position={[robotState.x / 10, 0, robotState.y / 10]} 
+            position={[robotState.x, 0, robotState.y]} 
             rotation={robotState.rotation}
           />
           <gridHelper args={[20, 20]} />
