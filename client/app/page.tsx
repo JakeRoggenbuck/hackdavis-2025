@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const RobotVisualizer = dynamic(() => import('./components/RobotVisualizer'), {
-  ssr: false
+const RobotVisualizer = dynamic(() => import("./components/RobotVisualizer"), {
+  ssr: false,
 });
 
 export default function Home() {
@@ -12,4 +12,4 @@ export default function Home() {
       <RobotVisualizer />
     </main>
   );
-} 
+}

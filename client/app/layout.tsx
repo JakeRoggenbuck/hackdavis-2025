@@ -1,9 +1,9 @@
-import './globals.css';
-import type { Metadata } from 'next';
+import "./globals.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Robot Visualizer',
-  description: 'A high-tech robot visualization and programming interface',
+  title: "Robot Visualizer",
+  description: "A high-tech robot visualization and programming interface",
 };
 
 export default function RootLayout({
@@ -16,4 +16,4 @@ export default function RootLayout({
       <body>{children}</body>
     </html>
   );
-} 
+}
