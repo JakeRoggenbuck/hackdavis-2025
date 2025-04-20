@@ -1,140 +1,137 @@
-# HackDavis 2025 Project
+# 🚀 RoboCode IDE - HackDavis 2025
 
-A modern web-based IDE with a custom compiler backend, built for HackDavis 2025.
+<div align="center">
 
-## Features
+![RoboCode IDE](robot-asm.png)
 
-### Frontend (Next.js)
-- Split-screen interface with code editor and terminal
-- Monaco Editor for code editing
-- XTerm.js terminal emulator
-- Real-time compilation status indicators
-- Modern UI with Tailwind CSS
-- Responsive design
+**A revolutionary web-based IDE with a custom assembly-like language for robotics programming!**
 
-### Backend (Rust)
-- Custom compiler implementation
-- Lexer and parser for custom language
-- Unicode support for identifiers
-- Section-based code organization
-- Command parsing and validation
+[![Built for HackDavis](https://img.shields.io/badge/Built%20for-HackDavis%202025-blue?style=for-the-badge)](https://hackdavis.io)
+[![Made with Next.js](https://img.shields.io/badge/Made%20with-Next.js-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![Powered by Rust](https://img.shields.io/badge/Powered%20by-Rust-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
 
-## Tech Stack
+</div>
 
-### Frontend
-- Next.js 15
-- TypeScript
-- Tailwind CSS
-- Monaco Editor
-- XTerm.js
-- React Icons
+## 🌟 Overview
 
-### Backend
-- Rust
-- Custom lexer and parser
-- Unicode support
+RoboCode IDE is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
 
-## Getting Started
+### ✨ Key Features
+
+- 🎯 **Interactive Grid Visualization** - Real-time visual feedback of your robot's movements
+- 💻 **Advanced Code Editor** - Powered by Monaco Editor with syntax highlighting
+- 🖥️ **Integrated Terminal** - Built-in command execution with XTerm.js
+- ⚡ **Real-time Compilation** - Instant feedback on your code
+- 🎨 **Modern UI/UX** - Sleek interface with Tailwind CSS
+- 🔧 **Custom Assembly Language** - Simplified robotics programming
+
+## 🛠️ Tech Stack
+
+### Frontend Powerhouse
+- ⚛️ **Next.js 15** - React framework for production
+- 📝 **TypeScript** - Type-safe development
+- 🎨 **Tailwind CSS** - Utility-first styling
+- 📊 **Monaco Editor** - VS Code-like editing experience
+- 🖥️ **XTerm.js** - Terminal emulation
+- 🎯 **React Icons** - Beautiful iconography
+
+### Robust Backend
+- 🦀 **Rust** - Systems programming language
+- 🔧 **Custom Compiler** - Purpose-built for robotics
+- 🌐 **Unicode Support** - International character compatibility
+- 📦 **Module System** - Organized code structure
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ and npm
+- Node.js 18+
 - Rust and Cargo
 - Git
 
-### Installation
+### Quick Start
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/hackdavis-2025.git
-cd hackdavis-2025
-```
+1. **Clone & Install**
+   ```bash
+   git clone https://github.com/yourusername/hackdavis-2025.git
+   cd hackdavis-2025
+   ```
 
-2. Install frontend dependencies:
-```bash
-npm install
-```
+2. **Frontend Setup**
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
 
-3. Install backend dependencies:
-```bash
-cd hackdavis-2025-compiler
-cargo build
-```
+3. **Compiler Setup**
+   ```bash
+   cd compiler
+   cargo build
+   cargo test
+   ```
 
-### Running the Project
-
-1. Start the frontend development server:
-```bash
-npm run dev
-```
-
-2. Run the compiler tests:
-```bash
-cd hackdavis-2025-compiler
-cargo test
-```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 hackdavis-2025/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx
-│   │   └── globals.css
-│   └── components/
-│       └── IDE.tsx
-├── hackdavis-2025-compiler/
-│   └── src/
-│       ├── lib.rs
-│       ├── lexer.rs
-│       └── parser.rs
-└── README.md
+├── client/                  # Frontend application
+│   ├── app/                # Next.js app directory
+│   │   ├── components/     # React components
+│   │   ├── page.tsx       # Main page
+│   │   └── globals.css    # Global styles
+│   └── package.json       # Frontend dependencies
+│
+├── compiler/               # Rust compiler backend
+│   ├── src/               # Source code
+│   │   ├── lexer.rs      # Token analysis
+│   │   ├── parser.rs     # AST generation
+│   │   └── lib.rs        # Core functionality
+│   └── Cargo.toml        # Rust dependencies
+│
+└── README.md              # Project documentation
 ```
 
-## Development
+## 🎮 Usage Example
 
-### Frontend Development
-The frontend is built with Next.js and uses:
-- Client-side components for the IDE interface
-- Dynamic imports for Monaco Editor and XTerm.js
-- Tailwind CSS for styling
-- React hooks for state management
+```assembly
+# Create a square pattern
+circle:
+    mov direction, 1    # Set direction
+    mov forward, 4      # Move 4 units
+    mov direction, 0    # Reset direction
 
-### Backend Development
-The backend compiler is written in Rust and includes:
-- Lexer for tokenizing source code
-- Parser for building abstract syntax trees
-- Unicode support for identifiers
-- Section-based code organization
-
-## Testing
-
-### Frontend Tests
-```bash
-npm test
+main:
+    jal circle          # Jump to circle routine
+    mov forward, 4      # Move forward
+    jal circle          # Repeat pattern
 ```
 
-### Backend Tests
-```bash
-cd hackdavis-2025-compiler
-cargo test
-```
+## 🤝 Contributing
 
-## Contributing
+We welcome contributions! Here's how you can help:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
+## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-- HackDavis 2025 organizers
-- Next.js team
-- Rust community
-- Monaco Editor and XTerm.js maintainers
+- HackDavis 2025 organizers and mentors
+- The amazing Next.js and Rust communities
+- All contributors and supporters
+
+---
+
+<div align="center">
+
+**Built with ❤️ at HackDavis 2025**
+
+[Report Bug](https://github.com/yourusername/hackdavis-2025/issues) · [Request Feature](https://github.com/yourusername/hackdavis-2025/issues)
+
+</div>
