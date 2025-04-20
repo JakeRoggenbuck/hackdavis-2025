@@ -329,7 +329,7 @@ main:
 
   return (
     <div className="flex w-full h-screen">
-      <div className="w-1/2 p-4 bg-secondary flex flex-col">
+      <div className="w-1/2 p-4 bg-secondary flex flex-col h-full">
         <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
           <button
             onClick={handleCompile}
@@ -363,8 +363,8 @@ main:
             </div>
           )}
         </div>
-        <div className="flex-1 flex flex-col">
-          <div className="h-1/2">
+        <div className="flex-1 flex flex-col h-[calc(100%-60px)]">
+          <div className="flex-1">
             <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Assembly Code</span>
             </div>
@@ -374,33 +374,31 @@ main:
               theme="dark"
               extensions={[javascript()]}
               onChange={handleCodeChange}
-              className="rounded-b-lg overflow-hidden"
+              className="rounded-b-lg"
             />
           </div>
-          <div className="h-1/2 mt-2">
+          <div className="flex-1">
             <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
             </div>
-            <div className="h-[calc(50%-30px)] overflow-auto">
-              <CodeMirror
-                value={cppCode}
-                height="100%"
-                theme="dark"
-                extensions={[cpp()]}
-                readOnly={true}
-                className="rounded-b-lg"
-                basicSetup={{
-                  lineNumbers: true,
-                  highlightActiveLine: false,
-                  highlightActiveLineGutter: false,
-                  foldGutter: false,
-                  dropCursor: false,
-                  allowMultipleSelections: false,
-                  indentOnInput: false,
-                  syntaxHighlighting: true,
-                }}
-              />
-            </div>
+            <CodeMirror
+              value={cppCode}
+              height="calc(100% - 30px)"
+              theme="dark"
+              extensions={[cpp()]}
+              readOnly={true}
+              className="rounded-b-lg"
+              basicSetup={{
+                lineNumbers: true,
+                highlightActiveLine: false,
+                highlightActiveLineGutter: false,
+                foldGutter: false,
+                dropCursor: false,
+                allowMultipleSelections: false,
+                indentOnInput: false,
+                syntaxHighlighting: true,
+              }}
+            />
           </div>
         </div>
       </div>
