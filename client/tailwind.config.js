@@ -11,16 +11,7 @@ module.exports = {
         primary: "#1a1a1a",
         secondary: "#2a2a2a",
         accent: "#646cff"
-      },
-      keyframes: {
-        loading: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(100%)' },
-        },
-      },
-      animation: {
-        loading: 'loading 1s ease-in-out infinite',
-      },
+      }
     },
   },
   plugins: [],
