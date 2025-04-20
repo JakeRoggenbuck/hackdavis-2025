@@ -81,7 +81,7 @@ void loop() {
 
     // Add the motor control functions
     output.push_str(
-        r#"void backwards(int time){
+        r#"void forward(int time){
         	delay(500);
 	digitalWrite(in2, HIGH);
 	digitalWrite(in1, LOW);
@@ -92,7 +92,7 @@ void loop() {
 
 }
 
-void forward(int time){
+void backwards(int time){
 	delay(500);
 	digitalWrite(in1, HIGH);
 	digitalWrite(in2, LOW);
