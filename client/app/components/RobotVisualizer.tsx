@@ -56,9 +56,6 @@ main:
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
   const [isLoadingCpp, setIsLoadingCpp] = useState(false);
-  const [displayedCppCode, setDisplayedCppCode] = useState<string>('');
-  const [currentLineIndex, setCurrentLineIndex] = useState<number>(0);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
@@ -84,9 +81,6 @@ main:
     return () => {
       if (animationFrame.current) {
         cancelAnimationFrame(animationFrame.current);
-      }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
       }
     };
   }, []);
@@ -242,22 +236,6 @@ main:
     }
   };
 
-  const startTypingAnimation = (fullCode: string) => {
-    const lines = fullCode.split('\n');
-    setDisplayedCppCode('');
-    setCurrentLineIndex(0);
-    
-    const typeNextLine = () => {
-      if (currentLineIndex < lines.length) {
-        setDisplayedCppCode(prev => prev + (prev ? '\n' : '') + lines[currentLineIndex]);
-        setCurrentLineIndex(prev => prev + 1);
-        typingTimeoutRef.current = setTimeout(typeNextLine, 50);
-      }
-    };
-
-    typeNextLine();
-  };
-
   const handleCompile = async () => {
     setCompilationStatus({ status: 'compiling', message: 'Analyzing code structure...' });
     setIsLoadingCpp(true);
@@ -279,7 +257,6 @@ main:
 
       const arduinoData = await arduinoResponse.json();
       setCppCode(arduinoData.output);
-      startTypingAnimation(arduinoData.output);
       console.log('Generated Arduino C++ code:', arduinoData.output);
       setIsLoadingCpp(false);
 
@@ -413,7 +390,7 @@ main:
               </div>
             )}
             <CodeMirror
-              value={displayedCppCode}
+              value={cppCode}
               height="calc(100% - 30px)"
               theme="dark"
               extensions={[cpp()]}
