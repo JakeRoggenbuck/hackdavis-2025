@@ -167,10 +167,7 @@ const HelpMenu = () => {
               - Turn right
             </li>
             <li>
-              <code className="bg-[#2a2a2a] px-2 py-1 rounded">
-                mov forward, X
-              </code>{" "}
-              - Move forward X units
+              <code className="bg-[#2a2a2a] px-2 py-1 rounded">mov forward/backward/wait, X</code> - Move/wait for X seconds
             </li>
             <li>
               <code className="bg-[#2a2a2a] px-2 py-1 rounded">jal label</code>{" "}
