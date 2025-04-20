@@ -81,49 +81,60 @@ void loop() {
 
     // Add the motor control functions
     output.push_str(
-        r#"void forward(float time){
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);    
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+            output.push_str(
+        r#"void backwards(int time){
+        	delay(500);
+	digitalWrite(in2, HIGH);
+	digitalWrite(in1, LOW);
+	delay(time*1000);
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	delay(500);
+
 }
 
-void backwards(float time){
-    digitalWrite(in2, HIGH);
-    digitalWrite(in1, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+void forward(int time){
+	delay(500);
+	digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	delay(time*1000);	
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	delay(500);
 }
 
 void right(){
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
+    	straight();
+	delay(500);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, HIGH);
+	delay(500);
 }
 
-void wait(float time){
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);
+void wait(int time){
+    	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	// float delayTime = time*1000;
+	// long delayLong = (long)delayTime;
+	delay(time*1000);
 }
 
 void left(){
-    digitalWrite(in4, LOW);
-    digitalWrite(in3, HIGH);
+    	straight();
+	delay(500);
+	digitalWrite(in4, LOW);
+	digitalWrite(in3, HIGH);
+	delay(500);
 }
 
 void straight(){
-    digitalWrite(in4, LOW);
-    digitalWrite(in3, LOW);
+    	digitalWrite(in4, LOW);
+	digitalWrite(in3, LOW);
+	delay(500);
 }
 "#,
+
+
     );
 
     Ok(output)

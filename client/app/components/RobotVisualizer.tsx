@@ -182,6 +182,12 @@ main:
 
 
 
+
+
+
+
+
+
     
     `);
 
@@ -540,9 +546,9 @@ main:
   };
 
   return (
-    <div className="flex w-full h-screen">
-      <div className="w-1/2 p-4 bg-secondary flex flex-col h-full">
-        <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
+      <div className="flex w-full h-full overflow-visible">
+      <div className="w-1/2 p-4 bg-white flex flex-col h-screen">
+	  <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
           <button
             onClick={handleCompile}
             disabled={compilationStatus.status === 'compiling' || robotState.isAnimating}
@@ -575,11 +581,12 @@ main:
             </div>
           )}
         </div>
-        <div className="flex-1 flex flex-col h-[calc(100%-60px)]">
-          <div className="flex-1">
-            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
+
+        <div className="flex-1 flex flex-col h-full">
+          <div className="h-full">
+           { <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Assembly Code</span>
-            </div>
+            </div>}
             <CodeMirror
               value={code}
               height="calc(100% - 30px)"
@@ -593,7 +600,7 @@ main:
             />
           </div>
           <div className="flex-1 relative">
-            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4 justify-between">
+            {<div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4 justify-between">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
               <div className="flex items-center gap-2">
                 <button
@@ -632,7 +639,7 @@ main:
                   'bg-red-400'
                 }`} />
               </div>
-            </div>
+            </div>}
             {compilationStatus.status === 'compiling' && <LoadingBar />}
             {showCppCode && (
               <CodeMirror
@@ -658,6 +665,8 @@ main:
           </div>
         </div>
       </div>
+
+
       <div className="w-1/2 bg-primary">
         <Canvas camera={{ position: [10, 10, 10] }}>
           <ambientLight intensity={0.5} />
