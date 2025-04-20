@@ -2,11 +2,9 @@
 
 <div align="center">
 
-![image](https://github.com/user-attachments/assets/d63eeed3-24af-4aa6-89f1-f2c9bf6aeb25)
-
 A modern web-based IDE with a custom compiler backend, built for HackDavis 2025.
 
-![RoboCode IDE](robot-asm.png)
+![image](https://github.com/user-attachments/assets/d63eeed3-24af-4aa6-89f1-f2c9bf6aeb25)
 
 **A revolutionary web-based IDE with a custom assembly-like language for robotics programming!**
 
