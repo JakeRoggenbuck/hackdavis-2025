@@ -3,8 +3,8 @@ use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use compiler::{compile, compile_to_arduino, CompilerError};
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::process::Command;
 use std::path::Path;
+use std::process::Command;
 use tempfile::tempdir;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,9 +50,11 @@ async fn upload_arduino(req: web::Json<UploadRequest>) -> impl Responder {
     // Create a temporary directory for the sketch
     let temp_dir = match tempdir() {
         Ok(dir) => dir,
-        Err(e) => return HttpResponse::InternalServerError().json(ErrorResponse {
-            error: format!("Failed to create temporary directory: {}", e),
-        }),
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(ErrorResponse {
+                error: format!("Failed to create temporary directory: {}", e),
+            })
+        }
     };
 
     // Create the sketch directory structure
@@ -104,21 +106,15 @@ async fn upload_arduino(req: web::Json<UploadRequest>) -> impl Responder {
         .output();
 
     match upload_output {
-        Ok(output) if output.status.success() => {
-            HttpResponse::Ok().json(CompileResponse {
-                output: "Upload successful".to_string(),
-            })
-        }
-        Ok(output) => {
-            HttpResponse::BadRequest().json(ErrorResponse {
-                error: String::from_utf8_lossy(&output.stderr).to_string(),
-            })
-        }
-        Err(e) => {
-            HttpResponse::InternalServerError().json(ErrorResponse {
-                error: format!("Failed to upload: {}", e),
-            })
-        }
+        Ok(output) if output.status.success() => HttpResponse::Ok().json(CompileResponse {
+            output: "Upload successful".to_string(),
+        }),
+        Ok(output) => HttpResponse::BadRequest().json(ErrorResponse {
+            error: String::from_utf8_lossy(&output.stderr).to_string(),
+        }),
+        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
+            error: format!("Failed to upload: {}", e),
+        }),
     }
 }
 
@@ -139,16 +135,14 @@ async fn main() -> std::io::Result<()> {
             .allow_any_header()
             .max_age(3600);
 
-        App::new()
-            .wrap(cors)
-            .service(
-                web::scope("/api")
-                    .route("/compile", web::post().to(compile_ir))
-                    .route("/compile/arduino", web::post().to(compile_arduino))
-                    .route("/upload/arduino", web::post().to(upload_arduino)),
-            )
+        App::new().wrap(cors).service(
+            web::scope("/api")
+                .route("/compile", web::post().to(compile_ir))
+                .route("/compile/arduino", web::post().to(compile_arduino))
+                .route("/upload/arduino", web::post().to(upload_arduino)),
+        )
     })
     .bind(bind_address)?
     .run()
     .await
-} 
+}

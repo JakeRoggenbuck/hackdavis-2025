@@ -42,33 +42,33 @@ void loop() {
 
     // Generate functions for each section
     for section in &program.sections {
-        let section_name = if section.name == "main" { "main_loop" } else { &section.name };
+        let section_name = if section.name == "main" {
+            "main_loop"
+        } else {
+            &section.name
+        };
         output.push_str(&format!("void {}() {{\n", section_name));
 
         for command in &section.commands {
             match command {
-                Command::Move { r#type, amount } => {
-                    match r#type.as_str() {
-                        "forward" => {
-                            output.push_str(&format!("    forward({});\n", amount));
-                        }
-                        "backward" => {
-                            output.push_str(&format!("    backwards({});\n", amount));
-                        }
-                        "direction" => {
-                            match amount {
-                                1 => output.push_str("    left();\n"),
-                                2 => output.push_str("    right();\n"),
-                                0 => output.push_str("    straight();\n"),
-                                _ => return Err(format!("Invalid direction value: {}", amount)),
-                            }
-                        }
-                        "wait" => {
-                            output.push_str(&format!("    wait({});\n", amount));
-                        }
-                        _ => return Err(format!("Unknown command type: {}", r#type)),
+                Command::Move { r#type, amount } => match r#type.as_str() {
+                    "forward" => {
+                        output.push_str(&format!("    forward({});\n", amount));
                     }
-                }
+                    "backward" => {
+                        output.push_str(&format!("    backwards({});\n", amount));
+                    }
+                    "direction" => match amount {
+                        1 => output.push_str("    left();\n"),
+                        2 => output.push_str("    right();\n"),
+                        0 => output.push_str("    straight();\n"),
+                        _ => return Err(format!("Invalid direction value: {}", amount)),
+                    },
+                    "wait" => {
+                        output.push_str(&format!("    wait({});\n", amount));
+                    }
+                    _ => return Err(format!("Unknown command type: {}", r#type)),
+                },
                 Command::Jump { label } => {
                     let target_name = if label == "main" { "main_loop" } else { label };
                     output.push_str(&format!("    {}();\n", target_name));
@@ -81,47 +81,55 @@ void loop() {
 
     // Add the motor control functions
     output.push_str(
-        r#"void forward(float time){
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);    
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+        r#"void backwards(int time){
+        	delay(500);
+	digitalWrite(in2, HIGH);
+	digitalWrite(in1, LOW);
+	delay(time*1000);
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	delay(500);
+
 }
 
-void backwards(float time){
-    digitalWrite(in2, HIGH);
-    digitalWrite(in1, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+void forward(int time){
+	delay(500);
+	digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	delay(time*1000);	
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	delay(500);
 }
 
 void right(){
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
+    	straight();
+	delay(500);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, HIGH);
+	delay(500);
 }
 
-void wait(float time){
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);
+void wait(int time){
+    	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	// float delayTime = time*1000;
+	// long delayLong = (long)delayTime;
+	delay(time*1000);
 }
 
 void left(){
-    digitalWrite(in4, LOW);
-    digitalWrite(in3, HIGH);
+    	straight();
+	delay(500);
+	digitalWrite(in4, LOW);
+	digitalWrite(in3, HIGH);
+	delay(500);
 }
 
 void straight(){
-    digitalWrite(in4, LOW);
-    digitalWrite(in3, LOW);
+    	digitalWrite(in4, LOW);
+	digitalWrite(in3, LOW);
+	delay(500);
 }
 "#,
     );

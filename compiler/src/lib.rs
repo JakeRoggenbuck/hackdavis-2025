@@ -20,13 +20,13 @@ pub use ir::{Command, Program, Section};
 pub use parser::Parser;
 
 /// Compiles the input assembly code to IR (JSON format)
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `input` - The assembly code to compile
-/// 
+///
 /// # Returns
-/// 
+///
 /// Returns a JSON string representing the IR, or an error if compilation fails
 pub fn compile(input: String) -> Result<String, CompilerError> {
     let mut parser = Parser::new(input);
@@ -35,13 +35,13 @@ pub fn compile(input: String) -> Result<String, CompilerError> {
 }
 
 /// Compiles the input assembly code to Arduino C++ code
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `input` - The assembly code to compile
-/// 
+///
 /// # Returns
-/// 
+///
 /// Returns the generated Arduino C++ code, or an error if compilation fails
 pub fn compile_to_arduino(input: String) -> Result<String, CompilerError> {
     let mut parser = Parser::new(input);
