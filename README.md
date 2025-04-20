@@ -1,8 +1,8 @@
-# 🚀 Assembler - HackDavis 2025
+# 🚀 Assemblr - HackDavis 2025
 
 <div align="center">
 
-![Assembler](assembler.png)
+![Assemblr](assemblr.png)
 
 **A revolutionary web-based IDE with a custom assembly-like language for robotics programming!**
 
@@ -16,7 +16,7 @@
 
 ## 🌟 Overview
 
-Assembler is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
+Assemblr is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
 
 ### Key Features
 - 🎯 **Real-time Compilation**: Instant feedback on your code
