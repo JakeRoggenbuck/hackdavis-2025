@@ -43,6 +43,14 @@ const Robot = ({ position, rotation }: { position: [number, number, number], rot
   );
 };
 
+const LoadingBar = () => {
+  return (
+    <div className="absolute top-0 left-0 w-full h-1 bg-gray-700 overflow-hidden">
+      <div className="w-1/2 h-full bg-accent animate-[loading_2s_ease-in-out_infinite]" />
+    </div>
+  );
+};
+
 export default function RobotVisualizer() {
   const [code, setCode] = useState(`circle:
     mov direction, 1
@@ -377,10 +385,11 @@ main:
               className="rounded-b-lg"
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 relative">
             <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
             </div>
+            {compilationStatus.status === 'compiling' && <LoadingBar />}
             <CodeMirror
               value={cppCode}
               height="calc(100% - 30px)"
