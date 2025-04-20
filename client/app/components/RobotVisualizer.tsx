@@ -1,11 +1,65 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
-import { cpp } from '@codemirror/lang-cpp';
-import { Canvas } from '@react-three/fiber';
+import CodeMirror from '@uiw/react-codemirror'; // React wrapper for CodeMirror
+//import { javascript } from '@codemirror/lang-javascript'; // JavaScript syntax highlighting
+import { cpp } from '@codemirror/lang-cpp'; // C++ syntax highlighting
+import {HighlightStyle} from "@codemirror/highlight"
+import { EditorView } from '@codemirror/view'; // CodeMirror EditorView
+import {tags} from "@lezer/highlight";
+import { basicSetup } from '@codemirror/basic-setup'; // Basic setup for editor
+import { Canvas } from '@react-three/fiber'; // React Three.js for 3D rendering
 import { OrbitControls } from '@react-three/drei';
+import { StreamLanguage } from '@codemirror/language';
+import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
+
+
+
+
+// myCustomMode.js
+
+// Define the custom mode
+
+const myLanguage = StreamLanguage.define({
+  startState: () => ({}),
+  token: (stream) => {
+    if (stream.match(/(?:mov|jal)\b/)) return 'keyword';
+	if (stream.match(/(?:forward|backward|direction|wait)\b/)) return 'comment';
+    if (stream.match(/"(?:[^\\"]|\\.)*"/)) return 'string';
+    stream.next();
+    return null;
+  },
+});
+const myHighlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: '#ff0055', fontWeight: 'bold' },
+  { tag: tags.comment, color: '#888888', fontStyle: 'italic' },
+  { tag: tags.string, color: '#22863a' },
+]);
+  const keywords = ["mov", "jal"];
+  const registerNames = ["forward", "backward", "direction", "wait"];
+  import { syntaxTree } from '@codemirror/language'; // Import syntaxTree facet
+  const customCompletionSource = (context: CompletionContext) => {
+  const before = context.state.sliceDoc(Math.max(0, context.pos - 20), context.pos);
+  const match = before.match(/(\w+)$/);
+  const word = match ? match[1] : "";
+
+  return {
+    from: match ? context.pos - word.length : context.pos,
+    options: [
+      ...keywords.filter(keyword => keyword.startsWith(word)).map(keyword => ({
+        label: keyword,
+        type: 'keyword'
+      })),
+      ...registerNames.filter(reg => reg.startsWith(word)).map(reg => ({
+        label: reg,
+        type: 'registerName'
+      })),
+    ],
+  };
+};
+
+
+// myCustomMode.js
 
 interface RobotState {
   x: number;
@@ -334,6 +388,39 @@ main:
     setCode(value);
     setCompilationStatus({ status: 'idle', message: 'Ready to compile' });
   };
+    const extensions = [
+    myLanguage, // Add your custom language mode
+	    autocompletion({ override: [customCompletionSource] }), // Correct function name!
+
+    EditorView.theme({
+      '&': {
+        color: '#abb2bf', // Example default text color for dark theme
+        backgroundColor: '#282c34', // Example dark background color
+      },
+      '.cm-content': {
+        caretColor: '#c6c6c6',
+      },
+      '.cm-line': {
+        paddingLeft: '10px',
+        paddingRight: '10px',
+      },
+      '&.cm-focused .cm-selectionBackground, ::selection': {
+        backgroundColor: '#3e4451',
+      },
+      '.cm-gutters': {
+        backgroundColor: '#282c34',
+        color: '#6b829e',
+        border: 'none',
+      },
+      '.cm-activeLine': {
+        backgroundColor: '#363b46',
+      },
+      '.cm-activeLineGutter': {
+        backgroundColor: '#363b46',
+      },
+      ...myHighlightStyle.module, // Apply your custom highlight style
+    }),
+  ];
 
   return (
     <div className="flex w-full h-screen">
@@ -379,8 +466,11 @@ main:
             <CodeMirror
               value={code}
               height="calc(100% - 30px)"
+
               theme="dark"
-              extensions={[javascript()]}
+
+              //extensions={[highlighting]}
+              extensions={extensions}
               onChange={handleCodeChange}
               className="rounded-b-lg"
             />
