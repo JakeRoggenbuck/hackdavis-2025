@@ -16,30 +16,30 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Program {
+    pub fn parse(&mut self) -> Result<Program, String> {
         let mut sections = Vec::new();
 
         while self.current_token != Token::Eof {
-            sections.push(self.parse_section());
+            sections.push(self.parse_section()?);
         }
 
-        Program { sections }
+        Ok(Program { sections })
     }
 
-    fn parse_section(&mut self) -> Section {
+    fn parse_section(&mut self) -> Result<Section, String> {
         // Get section name
         let name = if let Token::Identifier(name) = self.current_token.clone() {
             self.advance();
             name
         } else {
-            panic!("Expected section name");
+            return Err("Expected section name".to_string());
         };
 
         // Expect colon
         if let Token::Colon = self.current_token {
             self.advance();
         } else {
-            panic!("Expected ':' after section name");
+            return Err("Expected ':' after section name".to_string());
         }
 
         let mut commands = Vec::new();
@@ -50,13 +50,13 @@ impl Parser {
                     break;
                 }
             }
-            commands.push(self.parse_command());
+            commands.push(self.parse_command()?);
         }
 
-        Section { name, commands }
+        Ok(Section { name, commands })
     }
 
-    fn parse_command(&mut self) -> Command {
+    fn parse_command(&mut self) -> Result<Command, String> {
         // Check if it's a jump instruction
         if let Token::Identifier(ref cmd) = self.current_token {
             if cmd == "jal" {
@@ -66,20 +66,20 @@ impl Parser {
                     self.advance();
                     label
                 } else {
-                    panic!("Expected label after jal");
+                    return Err("Expected label after jal".to_string());
                 };
-                return Command::Jump { label };
+                return Ok(Command::Jump { label });
             }
         }
 
         // Otherwise it's a mov command
         if let Token::Identifier(ref cmd) = self.current_token {
             if cmd != "mov" {
-                panic!("Expected 'mov' command or 'jal'");
+                return Err("Expected 'mov' command or 'jal'".to_string());
             }
             self.advance();
         } else {
-            panic!("Expected 'mov' command or 'jal'");
+            return Err("Expected 'mov' command or 'jal'".to_string());
         }
 
         // Get direction
@@ -87,14 +87,14 @@ impl Parser {
             self.advance();
             dir
         } else {
-            panic!("Expected direction");
+            return Err("Expected direction".to_string());
         };
 
         // Expect comma
         if let Token::Comma = self.current_token {
             self.advance();
         } else {
-            panic!("Expected ',' after direction");
+            return Err("Expected ',' after direction".to_string());
         }
 
         // Get amount
@@ -102,13 +102,13 @@ impl Parser {
             self.advance();
             n
         } else {
-            panic!("Expected number");
+            return Err("Expected number".to_string());
         };
 
-        Command::Move {
+        Ok(Command::Move {
             r#type: direction,
             amount,
-        }
+        })
     }
 
     fn advance(&mut self) {
@@ -135,7 +135,7 @@ mod tests {
         .to_string();
 
         let mut parser = Parser::new(input);
-        let program = parser.parse();
+        let program = parser.parse().unwrap();
 
         assert_eq!(program.sections.len(), 1);
         assert_eq!(program.sections[0].name, "circle");
@@ -159,7 +159,7 @@ mod tests {
         .to_string();
 
         let mut parser = Parser::new(input);
-        let program = parser.parse();
+        let program = parser.parse().unwrap();
 
         assert_eq!(program.sections.len(), 1);
         assert_eq!(program.sections[0].name, "main");

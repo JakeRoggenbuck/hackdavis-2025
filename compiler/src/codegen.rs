@@ -1,6 +1,6 @@
 use crate::ir::{Command, Program};
 
-pub fn generate_arduino_code(program: &Program) -> String {
+pub fn generate_arduino_code(program: &Program) -> Result<String, String> {
     let mut output = String::new();
 
     // Add the motor pin definitions and setup code
@@ -60,13 +60,13 @@ void loop() {
                                 1 => output.push_str("    left();\n"),
                                 2 => output.push_str("    right();\n"),
                                 0 => output.push_str("    straight();\n"),
-                                _ => panic!("Invalid direction value: {}", amount),
+                                _ => return Err(format!("Invalid direction value: {}", amount)),
                             }
                         }
                         "wait" => {
                             output.push_str(&format!("    wait({});\n", amount));
                         }
-                        _ => panic!("Unknown command type: {}", r#type),
+                        _ => return Err(format!("Unknown command type: {}", r#type)),
                     }
                 }
                 Command::Jump { label } => {
@@ -126,5 +126,5 @@ void straight(){
 "#,
     );
 
-    output
+    Ok(output)
 }

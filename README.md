@@ -2,9 +2,7 @@
 
 <div align="center">
 
-A modern web-based IDE with a custom compiler backend, built for HackDavis 2025.
-
-![image](https://github.com/user-attachments/assets/d63eeed3-24af-4aa6-89f1-f2c9bf6aeb25)
+![RoboCode IDE](robot-asm.png)
 
 **A revolutionary web-based IDE with a custom assembly-like language for robotics programming!**
 
@@ -18,18 +16,33 @@ A modern web-based IDE with a custom compiler backend, built for HackDavis 2025.
 
 RoboCode IDE is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
 
+<<<<<<< Updated upstream
 Here is an image of the API being called and getting the compiled code as an output.
 
 ![image](https://github.com/user-attachments/assets/0a203e86-447d-4619-a39b-7b79dbec5a92)
 
 ### ✨ Key Features
+=======
+## 📊 Architecture
+>>>>>>> Stashed changes
 
-- 🎯 **Interactive Grid Visualization** - Real-time visual feedback of your robot's movements
-- 💻 **Advanced Code Editor** - Powered by Monaco Editor with syntax highlighting
-- 🖥️ **Integrated Terminal** - Built-in command execution with XTerm.js
-- ⚡ **Real-time Compilation** - Instant feedback on your code
-- 🎨 **Modern UI/UX** - Sleek interface with Tailwind CSS
-- 🔧 **Custom Assembly Language** - Simplified robotics programming
+```mermaid
+graph TD
+    A[Frontend - Next.js] -->|HTTP POST| B[Backend Server - Rust]
+    B -->|Library Call| C[Compiler - Rust]
+    C -->|IR| D[Code Generation]
+    C -->|C++| E[Arduino Code]
+    
+    subgraph Frontend
+    A -->|Monaco Editor| F[Code Editor]
+    A -->|XTerm.js| G[Terminal]
+    end
+    
+    subgraph Backend
+    B -->|/api/compile| H[IR Compilation]
+    B -->|/api/compile/arduino| I[Arduino Compilation]
+    end
+```
 
 ## 🛠️ Tech Stack
 
@@ -46,6 +59,83 @@ Here is an image of the API being called and getting the compiled code as an out
 - 🔧 **Custom Compiler** - Purpose-built for robotics
 - 🌐 **Unicode Support** - International character compatibility
 - 📦 **Module System** - Organized code structure
+
+## 📡 API Documentation
+
+### Compilation Endpoints
+
+#### 1. Compile to IR
+```http
+POST /api/compile
+Content-Type: application/json
+
+{
+    "code": "your assembly code here"
+}
+```
+
+**Response:**
+```json
+{
+    "output": "compiled IR in JSON format"
+}
+```
+
+**Error Response:**
+```json
+{
+    "error": "error message"
+}
+```
+
+#### 2. Compile to Arduino
+```http
+POST /api/compile/arduino
+Content-Type: application/json
+
+{
+    "code": "your assembly code here"
+}
+```
+
+**Response:**
+```json
+{
+    "output": "generated Arduino C++ code"
+}
+```
+
+**Error Response:**
+```json
+{
+    "error": "error message"
+}
+```
+
+### Assembly Language Syntax
+
+```assembly
+# Example program
+circle:
+    mov direction, 1    # Turn left
+    mov forward, 4      # Move forward 4 units
+    mov direction, 0    # Go straight
+
+main:
+    jal circle          # Jump to circle routine
+    mov forward, 4      # Move forward
+    jal circle          # Repeat pattern
+```
+
+### Available Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `mov direction, N` | Set movement direction | `mov direction, 1` |
+| `mov forward, N` | Move forward N units | `mov forward, 4` |
+| `mov backward, N` | Move backward N units | `mov backward, 2` |
+| `mov wait, N` | Wait N seconds | `mov wait, 1` |
+| `jal label` | Jump to label | `jal circle` |
 
 ## 🚀 Getting Started
 
@@ -69,7 +159,13 @@ Here is an image of the API being called and getting the compiled code as an out
    npm run dev
    ```
 
-3. **Compiler Setup**
+3. **Backend Setup**
+   ```bash
+   cd server
+   cargo run
+   ```
+
+4. **Compiler Setup**
    ```bash
    cd compiler
    cargo build
@@ -87,29 +183,19 @@ hackdavis-2025/
 │   │   └── globals.css    # Global styles
 │   └── package.json       # Frontend dependencies
 │
-├── compiler/               # Rust compiler backend
-│   ├── src/               # Source code
-│   │   ├── lexer.rs      # Token analysis
-│   │   ├── parser.rs     # AST generation
-│   │   └── lib.rs        # Core functionality
-│   └── Cargo.toml        # Rust dependencies
+├── server/                 # HTTP backend
+│   ├── src/               # Server source
+│   │   └── main.rs       # API endpoints
+│   └── Cargo.toml        # Server dependencies
 │
-└── README.md              # Project documentation
-```
-
-## 🎮 Usage Example
-
-```assembly
-# Create a square pattern
-circle:
-    mov direction, 1    # Set direction
-    mov forward, 4      # Move 4 units
-    mov direction, 0    # Reset direction
-
-main:
-    jal circle          # Jump to circle routine
-    mov forward, 4      # Move forward
-    jal circle          # Repeat pattern
+├── compiler/              # Rust compiler backend
+│   ├── src/              # Source code
+│   │   ├── lexer.rs     # Token analysis
+│   │   ├── parser.rs    # AST generation
+│   │   └── lib.rs       # Core functionality
+│   └── Cargo.toml       # Rust dependencies
+│
+└── README.md             # Project documentation
 ```
 
 ## 🤝 Contributing

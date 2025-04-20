@@ -1,6 +1,6 @@
-use hackdavis_2025_compiler::{compile, compile_to_arduino};
+use compiler::{compile, compile_to_arduino, CompilerError};
 
-fn main() {
+fn main() -> Result<(), CompilerError> {
     let input = r#"
 circle:
     mov direction, 1
@@ -16,10 +16,12 @@ main:
     .to_string();
 
     println!("IR Output:");
-    let ir_output = compile(input.clone());
+    let ir_output = compile(input.clone())?;
     println!("{}", ir_output);
 
     println!("\nArduino Output:");
-    let arduino_output = compile_to_arduino(input);
+    let arduino_output = compile_to_arduino(input)?;
     println!("{}", arduino_output);
+
+    Ok(())
 }
