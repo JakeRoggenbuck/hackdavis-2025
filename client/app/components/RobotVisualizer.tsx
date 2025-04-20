@@ -248,17 +248,21 @@ main:
     
     let currentIndex = 0;
     const typeNextLine = () => {
-      if (currentIndex < lines.length) {
-        setDisplayedCppCode(prev => {
-          const newLine = lines[currentIndex];
-          currentIndex++;
-          return prev + (prev ? '\n' : '') + newLine;
-        });
-        typingTimeoutRef.current = setTimeout(typeNextLine, 50);
-      }
+      if (currentIndex >= lines.length) return;
+      
+      const newLine = lines[currentIndex];
+      setDisplayedCppCode(prev => {
+        const newContent = prev + (prev ? '\n' : '') + newLine;
+        currentIndex++;
+        if (currentIndex < lines.length) {
+          typingTimeoutRef.current = setTimeout(typeNextLine, 50);
+        }
+        return newContent;
+      });
     };
 
-    typeNextLine();
+    // Start the animation
+    typingTimeoutRef.current = setTimeout(typeNextLine, 50);
   };
 
   const handleCompile = async () => {
@@ -281,9 +285,10 @@ main:
       }
 
       const arduinoData = await arduinoResponse.json();
-      setCppCode(arduinoData.output);
-      startTypingAnimation(arduinoData.output);
-      console.log('Generated Arduino C++ code:', arduinoData.output);
+      const cleanCode = arduinoData.output; // The output is already in the correct format
+      setCppCode(cleanCode);
+      startTypingAnimation(cleanCode);
+      console.log('Generated Arduino C++ code:', cleanCode);
       setIsLoadingCpp(false);
 
       // Call the backend API to compile to IR
