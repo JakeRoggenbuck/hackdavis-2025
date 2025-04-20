@@ -26,6 +26,11 @@ interface CompilationStatus {
   message: string;
 }
 
+interface UploadStatus {
+  status: 'idle' | 'uploading' | 'success' | 'error';
+  message: string;
+}
+
 interface Label {
   name: string;
   instructions: string[];
@@ -63,6 +68,10 @@ main:
     jal circle`);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
+    status: 'idle',
+    message: 'Ready to upload'
+  });
 
   const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
@@ -335,6 +344,49 @@ main:
     setCompilationStatus({ status: 'idle', message: 'Ready to compile' });
   };
 
+  const handleDownload = () => {
+    const element = document.createElement('a');
+    const file = new Blob([cppCode], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = 'robot_sketch.ino';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleUpload = async () => {
+    setUploadStatus({ status: 'uploading', message: 'Uploading to Arduino...' });
+    
+    try {
+      const response = await fetch('http://localhost:8080/api/upload/arduino', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: cppCode,
+          port: '/dev/ttyUSB0' // You might want to make this configurable
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+      }
+
+      const data = await response.json();
+      setUploadStatus({ 
+        status: 'success', 
+        message: 'Upload successful! ✓' 
+      });
+    } catch (error) {
+      setUploadStatus({ 
+        status: 'error', 
+        message: error instanceof Error ? error.message : 'Error uploading to Arduino' 
+      });
+    }
+  };
+
   return (
     <div className="flex w-full h-screen">
       <div className="w-1/2 p-4 bg-secondary flex flex-col h-full">
@@ -386,8 +438,39 @@ main:
             />
           </div>
           <div className="flex-1 relative">
-            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
+            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4 justify-between">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownload}
+                  className="px-3 py-1 text-sm rounded-md bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Download
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploadStatus.status === 'uploading' || compilationStatus.status !== 'success'}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-2
+                    ${uploadStatus.status === 'uploading' ? 'bg-yellow-600 cursor-not-allowed' :
+                      compilationStatus.status !== 'success' ? 'bg-gray-600 cursor-not-allowed' :
+                      'bg-green-600 hover:bg-green-700'}`}
+                >
+                  {uploadStatus.status === 'uploading' ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    'Upload to Arduino'
+                  )}
+                </button>
+                <div className={`w-2 h-2 rounded-full ${
+                  uploadStatus.status === 'idle' ? 'bg-gray-400' :
+                  uploadStatus.status === 'uploading' ? 'bg-yellow-400' :
+                  uploadStatus.status === 'success' ? 'bg-green-400' :
+                  'bg-red-400'
+                }`} />
+              </div>
             </div>
             {compilationStatus.status === 'compiling' && <LoadingBar />}
             <CodeMirror

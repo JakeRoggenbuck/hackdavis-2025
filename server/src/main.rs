@@ -55,8 +55,16 @@ async fn upload_arduino(req: web::Json<UploadRequest>) -> impl Responder {
         }),
     };
 
-    // Create the sketch file
-    let sketch_path = temp_dir.path().join("sketch.ino");
+    // Create the sketch directory structure
+    let sketch_dir = temp_dir.path().join("sketch");
+    if let Err(e) = std::fs::create_dir(&sketch_dir) {
+        return HttpResponse::InternalServerError().json(ErrorResponse {
+            error: format!("Failed to create sketch directory: {}", e),
+        });
+    }
+
+    // Create the sketch file with the correct name
+    let sketch_path = sketch_dir.join("sketch.ino");
     if let Err(e) = std::fs::write(&sketch_path, &req.code) {
         return HttpResponse::InternalServerError().json(ErrorResponse {
             error: format!("Failed to write sketch file: {}", e),
@@ -68,7 +76,7 @@ async fn upload_arduino(req: web::Json<UploadRequest>) -> impl Responder {
         .arg("compile")
         .arg("--fqbn")
         .arg("arduino:avr:uno")
-        .arg(temp_dir.path())
+        .arg(&sketch_dir)
         .output();
 
     match compile_output {
@@ -92,7 +100,7 @@ async fn upload_arduino(req: web::Json<UploadRequest>) -> impl Responder {
         .arg(&req.port)
         .arg("--fqbn")
         .arg("arduino:avr:uno")
-        .arg(temp_dir.path())
+        .arg(&sketch_dir)
         .output();
 
     match upload_output {
