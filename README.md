@@ -1,8 +1,8 @@
-# 🚀 RoboCode IDE - HackDavis 2025
+# 🚀 Assembler - HackDavis 2025
 
 <div align="center">
 
-![RoboCode IDE](robot-asm.png)
+![Assembler](assembler.png)
 
 **A revolutionary web-based IDE with a custom assembly-like language for robotics programming!**
 
@@ -16,7 +16,7 @@
 
 ## 🌟 Overview
 
-RoboCode IDE is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
+Assembler is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
 
 ### Key Features
 - 🎯 **Real-time Compilation**: Instant feedback on your code
@@ -25,6 +25,26 @@ RoboCode IDE is a cutting-edge development environment that combines the power o
 - 🧪 **Debugging Tools**: Step-through execution and variable inspection
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile
 - 🌐 **Cloud Integration**: Save and share your projects
+
+## 💡 Pro Tips & Tricks
+
+### Code Organization
+- Use meaningful labels and variable names
+- Group related code into functions
+- Add comments to explain complex logic
+- Keep functions small and focused
+
+### Performance Optimization
+- Use variables for repeated values
+- Minimize wait times between movements
+- Optimize movement patterns
+- Use loops for repetitive actions
+
+### Debugging Techniques
+- Add strategic `mov wait` commands to slow down execution
+- Use variables to track state
+- Print debug information to the terminal
+- Test functions in isolation
 
 ## 📊 Architecture
 
@@ -149,43 +169,117 @@ Content-Type: application/json
 # Instructions are lowercase
 # Values can be decimal or hex (0x prefix)
 
-# Example program
-circle:
-    mov direction, 1    # Turn left
-    mov forward, 4      # Move forward 4 units
-    mov direction, 0    # Go straight
-    mov wait, 0.5       # Wait half a second
+# Example program - Simple Square Movement
+square:
+    mov forward, 10     # Move forward 10 units
+    mov direction, 1    # Turn left 90 degrees
+    mov forward, 10     # Move forward 10 units
+    mov direction, 1    # Turn left 90 degrees
+    mov forward, 10     # Move forward 10 units
+    mov direction, 1    # Turn left 90 degrees
+    mov forward, 10     # Move forward 10 units
+    ret                # Return to caller
 
 main:
-    jal circle          # Jump to circle routine
-    mov forward, 4      # Move forward
-    jal circle          # Repeat pattern
+    jal square         # Execute square movement
+    mov wait, 1        # Wait 1 second
+    jal square         # Repeat square movement
 ```
 
 #### Advanced Features
 ```assembly
-# Loops and conditionals
-loop:
-    mov forward, 1
-    mov wait, 0.1
-    sub counter, 1
-    bnez counter, loop  # Branch if not zero
+# Example: Complex Pattern with Variables and Loops
+var speed = 5
+var pattern_size = 4
+var angle = 45
 
-# Functions with parameters
-move_robot:
-    param distance
-    param direction
-    mov forward, distance
-    mov direction, direction
+# Function to draw a pattern
+draw_pattern:
+    param size
+    param angle
+    var i = 0
+    
+    pattern_loop:
+        mov forward, size
+        mov direction, angle
+        add i, 1
+        blt i, pattern_size, pattern_loop
     ret
 
-# Using variables
-var speed = 5
-var max_distance = 10
+main:
+    mov speed, speed           # Set movement speed
+    jal draw_pattern           # Draw first pattern
+    mov wait, 0.5             # Pause
+    mov direction, 180        # Turn around
+    jal draw_pattern           # Draw second pattern
+```
+
+#### More Examples
+
+##### 1. Spiral Pattern
+```assembly
+# Draw a spiral pattern
+spiral:
+    var radius = 1
+    var angle = 0
+    
+    spiral_loop:
+        mov forward, radius
+        mov direction, 1
+        add radius, 1
+        add angle, 1
+        blt angle, 36, spiral_loop
+    ret
 
 main:
-    mov speed, speed
-    mov forward, max_distance
+    jal spiral
+```
+
+##### 2. Obstacle Avoidance
+```assembly
+# Simple obstacle avoidance routine
+avoid_obstacle:
+    mov backward, 5           # Back up
+    mov direction, 1          # Turn left
+    mov forward, 10           # Move forward
+    mov direction, 2          # Turn right
+    mov forward, 10           # Move forward
+    ret
+
+main:
+    var obstacle_detected = 0
+    
+    loop:
+        mov forward, 1
+        # Simulate obstacle detection
+        add obstacle_detected, 1
+        beq obstacle_detected, 5, avoid
+        j loop
+    
+    avoid:
+        jal avoid_obstacle
+        mov obstacle_detected, 0
+        j loop
+```
+
+##### 3. Zigzag Pattern
+```assembly
+# Create a zigzag pattern
+zigzag:
+    var steps = 5
+    var i = 0
+    
+    zigzag_loop:
+        mov forward, 10
+        mov direction, 1
+        mov forward, 10
+        mov direction, 2
+        add i, 1
+        blt i, steps, zigzag_loop
+    ret
+
+main:
+    jal zigzag
 ```
 
 ### Available Commands
@@ -200,6 +294,12 @@ main:
 | `ret` | Return from subroutine | `ret` | Must be in function |
 | `var name = value` | Declare variable | `var speed = 5` | Global scope |
 | `param name` | Function parameter | `param distance` | Must be in function |
+| `add var, value` | Add to variable | `add counter, 1` | Supports variables |
+| `sub var, value` | Subtract from variable | `sub counter, 1` | Supports variables |
+| `blt var, value, label` | Branch if less than | `blt i, 10, loop` | Supports variables |
+| `beq var, value, label` | Branch if equal | `beq x, 0, end` | Supports variables |
+| `j label` | Unconditional jump | `j loop` | Direct jump |
+| `print var` | Print variable value | `print counter` | Debugging tool |
 
 ## 🚀 Getting Started
 
