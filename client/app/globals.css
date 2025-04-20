@@ -30,9 +30,9 @@ body {
 
 .cm-editor {
   height: 100% !important;
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
 }
 
 .cm-editor .cm-scroller {
   line-height: 1.6;
-} 
+}
