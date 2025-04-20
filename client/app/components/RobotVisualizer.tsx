@@ -51,6 +51,61 @@ const LoadingBar = () => {
   );
 };
 
+const HelpMenu = () => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+      >
+        <span className="text-sm">Assembly Help</span>
+        <svg
+          className={`w-4 h-4 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="mt-2 p-4 bg-[#1e1e1e] rounded-lg border border-[#333] text-sm text-gray-300">
+          <h3 className="text-white font-medium mb-2">Available Commands:</h3>
+          <ul className="space-y-2">
+            <li>
+              <code className="bg-[#2a2a2a] px-2 py-1 rounded">mov direction, 0</code> - Move straight
+            </li>
+            <li>
+              <code className="bg-[#2a2a2a] px-2 py-1 rounded">mov direction, 1</code> - Turn left
+            </li>
+            <li>
+              <code className="bg-[#2a2a2a] px-2 py-1 rounded">mov direction, 2</code> - Turn right
+            </li>
+            <li>
+              <code className="bg-[#2a2a2a] px-2 py-1 rounded">mov forward, X</code> - Move forward X units
+            </li>
+            <li>
+              <code className="bg-[#2a2a2a] px-2 py-1 rounded">jal label</code> - Jump to label and return
+            </li>
+          </ul>
+          
+          <h3 className="text-white font-medium mt-4 mb-2">Writing Tips:</h3>
+          <ul className="space-y-2">
+            <li>• Always start with a <code className="bg-[#2a2a2a] px-2 py-1 rounded">main:</code> label</li>
+            <li>• Use labels to organize your code into reusable sections</li>
+            <li>• Comments start with <code className="bg-[#2a2a2a] px-2 py-1 rounded">#</code></li>
+            <li>• Use <code className="bg-[#2a2a2a] px-2 py-1 rounded">jal</code> for function-like behavior</li>
+            <li>• Be careful with movement values - too large values may cause the robot to move off-screen</li>
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function RobotVisualizer() {
   const [code, setCode] = useState(`circle:
     mov direction, 1
@@ -66,6 +121,7 @@ main:
 
 
 
+    
     `);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
@@ -423,6 +479,7 @@ main:
                 }}
               />
             )}
+            <HelpMenu />
           </div>
         </div>
       </div>
