@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { cpp } from '@codemirror/lang-cpp';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
@@ -43,18 +44,17 @@ const Robot = ({ position, rotation }: { position: [number, number, number], rot
 };
 
 export default function RobotVisualizer() {
-  const [code, setCode] = useState(`# Robot Assembly Program
-# Define a circle movement pattern
-
-circle:
-    mov direction, 1    # Turn left
-    mov forward, 4      # Move forward for 4 seconds
-    mov direction, 0    # Go straight
+  const [code, setCode] = useState(`circle:
+    mov direction, 1
+    mov forward, 4
+    mov direction, 0
 
 main:
-    jal circle          # Call the circle function
-    mov forward, 2     # Move forward for 10 seconds
-    jal circle          # Call the circle function again`);
+    jal circle
+    mov forward, 2
+    jal circle`);
+
+  const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
 
   const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
@@ -254,6 +254,7 @@ main:
       }
 
       const arduinoData = await arduinoResponse.json();
+      setCppCode(arduinoData.output);
       console.log('Generated Arduino C++ code:', arduinoData.output);
 
       // Call the backend API to compile to IR
@@ -362,14 +363,46 @@ main:
             </div>
           )}
         </div>
-        <CodeMirror
-          value={code}
-          height="calc(100% - 60px)"
-          theme="dark"
-          extensions={[javascript()]}
-          onChange={handleCodeChange}
-          className="rounded-b-lg overflow-hidden"
-        />
+        <div className="flex-1 flex flex-col">
+          <div className="h-1/2">
+            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
+              <span className="text-sm text-gray-300">Assembly Code</span>
+            </div>
+            <CodeMirror
+              value={code}
+              height="calc(100% - 30px)"
+              theme="dark"
+              extensions={[javascript()]}
+              onChange={handleCodeChange}
+              className="rounded-b-lg overflow-hidden"
+            />
+          </div>
+          <div className="h-1/2 mt-2">
+            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
+              <span className="text-sm text-gray-300">Generated Arduino C++</span>
+            </div>
+            <div className="h-[calc(50%-30px)] overflow-auto">
+              <CodeMirror
+                value={cppCode}
+                height="100%"
+                theme="dark"
+                extensions={[cpp()]}
+                readOnly={true}
+                className="rounded-b-lg"
+                basicSetup={{
+                  lineNumbers: true,
+                  highlightActiveLine: false,
+                  highlightActiveLineGutter: false,
+                  foldGutter: false,
+                  dropCursor: false,
+                  allowMultipleSelections: false,
+                  indentOnInput: false,
+                  syntaxHighlighting: true,
+                }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
       <div className="w-1/2 bg-primary">
         <Canvas camera={{ position: [10, 10, 10] }}>
