@@ -63,7 +63,7 @@ main:
     jal circle`);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
-  const [showCppCode, setShowCppCode] = useState(true);
+  const [showCppCode, setShowCppCode] = useState(false);
 
   const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
