@@ -245,15 +245,12 @@ main:
   const startTypingAnimation = (fullCode: string) => {
     const lines = fullCode.split('\n');
     setDisplayedCppCode('');
+    setCurrentLineIndex(0);
     
-    let currentIndex = 0;
     const typeNextLine = () => {
-      if (currentIndex < lines.length) {
-        setDisplayedCppCode(prev => {
-          const newLine = lines[currentIndex];
-          currentIndex++;
-          return prev + (prev ? '\n' : '') + newLine;
-        });
+      if (currentLineIndex < lines.length) {
+        setDisplayedCppCode(prev => prev + (prev ? '\n' : '') + lines[currentLineIndex]);
+        setCurrentLineIndex(prev => prev + 1);
         typingTimeoutRef.current = setTimeout(typeNextLine, 50);
       }
     };
