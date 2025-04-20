@@ -12,6 +12,8 @@ import { Canvas } from '@react-three/fiber'; // React Three.js for 3D rendering
 import { OrbitControls } from '@react-three/drei';
 import { StreamLanguage } from '@codemirror/language';
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
+import { useTexture } from '@react-three/drei';
+
 
 
 
@@ -93,11 +95,14 @@ interface Label {
 const ANIMATION_DURATION = 1000; // 1 second per movement
 const INSTRUCTION_DELAY = 100; // 0.1 second between instructions
 
-const Robot = ({ position, rotation }: { position: [number, number, number], rotation: number }) => {
+const Robot = ({ position, rotation }: { position: [number, number, number], rotation: rotation }) => {
+	  const texture = useTexture('/robot.png'); // make sure this image is in your public folder
+
   return (
-    <mesh position={position} rotation={[0, rotation, 0]}>
-      <boxGeometry args={[1, 0.5, 1.5]} />
-      <meshStandardMaterial color="#646cff" />
+  <mesh position={position}  scale={[1, 1.5, 1]}>
+      <planeGeometry args={[1, 1]} />
+	        <meshBasicMaterial map={texture} transparent />
+
     </mesh>
   );
 };
@@ -182,7 +187,18 @@ main:
 
 
 
-    
+   
+
+
+
+
+
+
+
+
+
+
+
     `);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
@@ -202,6 +218,11 @@ main:
     isAnimating: false,
     currentCommand: ''
   });
+  const directionRef = useRef<number>(0); // instead of useState
+  const setDirection = (val: number) => {
+  directionRef.current = val;
+};
+
 
   const [compilationStatus, setCompilationStatus] = useState<CompilationStatus>({
     status: 'idle',
@@ -281,71 +302,96 @@ main:
     
     return labels;
   };
-
   const executeInstruction = async (instruction: string) => {
-    return new Promise<void>((resolve) => {
-      const [cmd, ...params] = instruction.split(' ').filter(Boolean);
-      const args = params.join(' ').split(',').map(p => p.trim());
+  return new Promise<void>((resolve) => {
+    const [cmd, ...params] = instruction.split(' ').filter(Boolean);
+    const args = params.join(' ').split(',').map(p => p.trim());
+    const SPEED = 1; // Constant speed in units per second
+    const TURN_RADIUS = 3; // Turn radius for arcs
 
-      // Update current command display
-      setRobotState(prev => ({ ...prev, currentCommand: instruction }));
+    setRobotState(prev => ({ ...prev, currentCommand: instruction }));
 
-      switch (cmd.toLowerCase()) {
-        case 'mov': {
-          const [type, value] = args;
-          const numValue = parseFloat(value);
-          
-          if (type === 'direction') {
-            if (numValue === 1) { // Turn left
-              setRobotState(prev => ({
-                ...prev,
-                targetRotation: prev.rotation + Math.PI / 2,
-                targetX: prev.x,
-                targetY: prev.y,
-                isAnimating: true
-              }));
-            } else if (numValue === 0) { // Straight
-              setRobotState(prev => ({
-                ...prev,
-                targetRotation: prev.rotation,
-                targetX: prev.x,
-                targetY: prev.y,
-                isAnimating: true
-              }));
-            }
-          } else if (type === 'forward') {
+    switch (cmd.toLowerCase()) {
+      case 'mov': {
+        const [type, value] = args;
+        const numValue = parseFloat(value);
+
+        if (type === 'direction') {
+          setDirection(numValue); // Set the direction (left, right, straight)
+          resolve(); // No animation needed for direction change
+        } else if (type === 'forward') {
+          const time = numValue; // Time in seconds
+          const distance = SPEED * time; // Calculate distance based on speed and time
+          const steps = time; // Number of steps to break down the movement for smoother animation
+          //const stepDuration = (time * 1000) / steps; // Time in ms per step
+
+          let currentStep = 0;
+
+          const animateMovement = () => {
             setRobotState(prev => {
               const angle = prev.rotation;
+              const direction = directionRef.current;
+              let newX = prev.x;
+              let newY = prev.y;
+              let newAngle = prev.rotation;
+
+              if (direction === 1) {
+                // Arc Left
+                const cx = prev.x - Math.sin(angle) * TURN_RADIUS;
+                const cy = prev.y + Math.cos(angle) * TURN_RADIUS;
+                const arcAngle = (distance / TURN_RADIUS) / steps;
+                newAngle = angle + arcAngle;
+                newX = cx + Math.sin(newAngle) * TURN_RADIUS;
+                newY = cy - Math.cos(newAngle) * TURN_RADIUS;
+              } else if (direction === 2) {
+                // Arc Right
+                const cx = prev.x + Math.sin(angle) * TURN_RADIUS;
+                const cy = prev.y - Math.cos(angle) * TURN_RADIUS;
+                const arcAngle = (distance / TURN_RADIUS) / steps;
+                newAngle = angle - arcAngle;
+                newX = cx - Math.sin(newAngle) * TURN_RADIUS;
+                newY = cy + Math.cos(newAngle) * TURN_RADIUS;
+              } else {
+                // Straight
+                newX = prev.x + Math.cos(angle) * (distance / steps);
+                newY = prev.y + Math.sin(angle) * (distance / steps);
+                newAngle = prev.rotation;
+              }
+
               return {
                 ...prev,
-                targetX: prev.x + Math.cos(angle) * numValue,
-                targetY: prev.y + Math.sin(angle) * numValue,
-                targetRotation: prev.rotation,
-                isAnimating: true
+                x: newX,
+                y: newY,
+                rotation: newAngle,
+                isAnimating: true,
               };
             });
-          }
-          
-          isAnimating.current = true;
-          startTime.current = performance.now();
-          animationFrame.current = requestAnimationFrame(animate);
 
-          // Wait for animation to complete
-          const checkAnimation = () => {
-            if (isAnimating.current) {
-              setTimeout(checkAnimation, 50);
+            currentStep++;
+
+            if (currentStep < steps) {
+              setTimeout(animateMovement, 1000); // Schedule the next step
             } else {
+              setRobotState(prev => ({
+                ...prev,
+                isAnimating: false, // Stop animation when finished
+              }));
               resolve();
             }
           };
-          setTimeout(checkAnimation, 50);
-          break;
+
+          animateMovement(); // Start the animation
         }
-        default:
-          resolve();
+        break;
       }
-    });
-  };
+      default:
+        resolve(); // No action for unrecognized instructions
+    }
+  });
+};
+
+
+
 
   const executeLabel = async (label: Label, labels: Map<string, Label>, executedLabels: Set<string> = new Set()) => {
     if (executedLabels.has(label.name)) {
@@ -540,46 +586,23 @@ main:
   };
 
   return (
-    <div className="flex w-full h-screen">
-      <div className="w-1/2 p-4 bg-secondary flex flex-col h-full">
-        <div className="h-[60px] bg-[#1e1e1e] rounded-t-lg border-b border-[#333] flex items-center px-4 gap-4 mb-0">
-          <button
-            onClick={handleCompile}
-            disabled={compilationStatus.status === 'compiling' || robotState.isAnimating}
-            className={`px-6 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2
-              ${(compilationStatus.status === 'compiling' || robotState.isAnimating)
-                ? 'bg-accent/50 cursor-not-allowed'
-                : 'bg-accent hover:bg-accent/80'}`}
-          >
-            {compilationStatus.status === 'compiling' ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                Compiling...
-              </>
-            ) : (
-              'Compile'
-            )}
-          </button>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${
-              compilationStatus.status === 'idle' ? 'bg-gray-400' :
-              compilationStatus.status === 'compiling' ? 'bg-yellow-400' :
-              compilationStatus.status === 'success' ? 'bg-green-400' :
-              'bg-red-400'
-            }`} />
-            <span className="text-sm text-gray-300">{compilationStatus.message}</span>
-          </div>
-          {robotState.currentCommand && (
-            <div className="ml-auto text-sm text-gray-300">
-              Executing: <span className="text-white font-mono">{robotState.currentCommand}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex-1 flex flex-col h-[calc(100%-60px)]">
-          <div className="flex-1">
-            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
+    <div className="flex w-full h-full overflow-visible">
+      <div className="w-1/2 p-4 bg-white flex flex-col h-screen">
+	  <div className="h-[400px] bg-[#b8b8b8] rounded-t-lg border-b border-[#333] flex items-center px-4 mb-0 mt-10">
+  {/* Optional: Indicator for Compilation Status */}
+  <div className={`w-2 h-2 rounded-full mr-4 my-3 ${
+    compilationStatus.status === 'idle' ? 'bg-gray-400' :
+    compilationStatus.status === 'compiling' ? 'bg-yellow-400' :
+    compilationStatus.status === 'success' ? 'bg-green-400' :
+    'bg-red-400'
+  }`} />
+</div>
+
+        <div className="flex-1 flex flex-col h-full">
+          <div className="h-full">
+           { /*<div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Assembly Code</span>
-            </div>
+            </div>*/}
             <CodeMirror
               value={code}
               height="calc(100% - 30px)"
@@ -593,7 +616,7 @@ main:
             />
           </div>
           <div className="flex-1 relative">
-            <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4 justify-between">
+            {/*<div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4 justify-between">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
               <div className="flex items-center gap-2">
                 <button
@@ -632,7 +655,7 @@ main:
                   'bg-red-400'
                 }`} />
               </div>
-            </div>
+            </div>*/}
             {compilationStatus.status === 'compiling' && <LoadingBar />}
             {showCppCode && (
               <CodeMirror
@@ -658,18 +681,53 @@ main:
           </div>
         </div>
       </div>
-      <div className="w-1/2 bg-primary">
-        <Canvas camera={{ position: [10, 10, 10] }}>
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
-          <Robot 
-            position={[robotState.x, 0, robotState.y]} 
-            rotation={robotState.rotation}
-          />
-          <gridHelper args={[20, 20]} />
-          <OrbitControls />
-        </Canvas>
-      </div>
+	  <div className="w-1/2 flex flex-col items-center justify-center">
+  <div className="w-[80%] flex justify-between pb-2 mb-0 w-[80%]">
+    <button
+      onClick={handleCompile}
+      disabled={compilationStatus.status === 'compiling' || robotState.isAnimating}
+      className={`px-4 py-2 text-sm rounded-md font-medium transition-all duration-200 flex items-center gap-2
+        ${(compilationStatus.status === 'compiling' || robotState.isAnimating)
+          ? 'bg-accent/50 cursor-not-allowed'
+          : 'bg-accent hover:bg-accent/80'}`}
+    >
+      {compilationStatus.status === 'compiling' ? (
+        <>
+          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          Compiling...
+        </>
+      ) : (
+        'Compile'
+      )}
+    </button>
+
+    <button
+      onClick={handleUpload}
+      disabled={uploadStatus.status === 'uploading' || compilationStatus.status !== 'success'}
+      className={`px-4 py-2 text-sm rounded-md transition-colors flex items-center gap-2
+        ${uploadStatus.status === 'uploading' ? 'bg-yellow-600 cursor-not-allowed' :
+          compilationStatus.status !== 'success' ? 'bg-gray-600 cursor-not-allowed' :
+          'bg-green-600 hover:bg-green-700'}`}
+    >
+      {uploadStatus.status === 'uploading' ? (
+        <>
+          <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          Uploading...
+        </>
+      ) : (
+        'Upload to Arduino'
+      )}
+    </button>
+  </div>
+
+  <div className="border-2 bg-gray-500 border-gray-500 p-2 w-[80%] h-[80%] flex items-center justify-center rounded-lg">
+    <Canvas orthographic camera={{ zoom: 50, position: [0, 0, 100] }}>
+      <Robot position={[robotState.x, robotState.y, 0]} />
+    </Canvas>
+  </div>
+</div>
+
+
     </div>
   );
 } 

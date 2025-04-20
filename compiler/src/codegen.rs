@@ -50,10 +50,18 @@ void loop() {
                 Command::Move { r#type, amount } => {
                     match r#type.as_str() {
                         "forward" => {
-                            output.push_str(&format!("    forward({});\n", amount));
+                            if *amount > 0 {
+                                output.push_str(&format!("    forward({});\n", amount));
+                            }else{
+                                return Err(format!("Invalid forward value: {}", amount));
+                            }
                         }
                         "backward" => {
-                            output.push_str(&format!("    backwards({});\n", amount));
+                            if *amount > 0 {
+                                output.push_str(&format!("    backwards({});\n", amount));
+                            }else{
+                                return Err(format!("Invalid backward value: {}", amount));
+                            }
                         }
                         "direction" => {
                             match amount {
@@ -64,7 +72,11 @@ void loop() {
                             }
                         }
                         "wait" => {
-                            output.push_str(&format!("    wait({});\n", amount));
+                            if *amount > 0 {
+                                output.push_str(&format!("    wait({});\n", amount));
+                            }else{
+                                return Err(format!("Invalid wait value: {}", amount));
+                            }
                         }
                         _ => return Err(format!("Unknown command type: {}", r#type)),
                     }
@@ -81,47 +93,55 @@ void loop() {
 
     // Add the motor control functions
     output.push_str(
-        r#"void forward(float time){
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);    
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+        r#"void forward(int time){
+        	delay(500);
+	digitalWrite(in2, HIGH);
+	digitalWrite(in1, LOW);
+	delay(time*1000);
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	delay(500);
+
 }
 
-void backwards(float time){
-    digitalWrite(in2, HIGH);
-    digitalWrite(in1, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+void backwards(int time){
+	delay(500);
+	digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	delay(time*1000);	
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	delay(500);
 }
 
 void right(){
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
+    	straight();
+	delay(500);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, HIGH);
+	delay(500);
 }
 
-void wait(float time){
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-    float delayTime = time*1000;
-    long delayLong = (long)delayTime;
-    delay(delayLong);
+void wait(int time){
+    	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	// float delayTime = time*1000;
+	// long delayLong = (long)delayTime;
+	delay(time*1000);
 }
 
 void left(){
-    digitalWrite(in4, LOW);
-    digitalWrite(in3, HIGH);
+    	straight();
+	delay(500);
+	digitalWrite(in4, LOW);
+	digitalWrite(in3, HIGH);
+	delay(500);
 }
 
 void straight(){
-    digitalWrite(in4, LOW);
-    digitalWrite(in3, LOW);
+    	digitalWrite(in4, LOW);
+	digitalWrite(in3, LOW);
+	delay(500);
 }
 "#,
     );
