@@ -63,6 +63,7 @@ main:
     jal circle`);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
+  const [showCppCode, setShowCppCode] = useState(true);
 
   const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
@@ -388,26 +389,34 @@ main:
           <div className="flex-1 relative">
             <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
+              <button
+                onClick={() => setShowCppCode(!showCppCode)}
+                className="ml-auto text-sm text-gray-300 hover:text-white transition-colors"
+              >
+                {showCppCode ? 'Hide' : 'Show'} Code
+              </button>
             </div>
             {compilationStatus.status === 'compiling' && <LoadingBar />}
-            <CodeMirror
-              value={cppCode}
-              height="calc(100% - 30px)"
-              theme="dark"
-              extensions={[cpp()]}
-              readOnly={true}
-              className="rounded-b-lg"
-              basicSetup={{
-                lineNumbers: true,
-                highlightActiveLine: false,
-                highlightActiveLineGutter: false,
-                foldGutter: false,
-                dropCursor: false,
-                allowMultipleSelections: false,
-                indentOnInput: false,
-                syntaxHighlighting: true,
-              }}
-            />
+            {showCppCode && (
+              <CodeMirror
+                value={cppCode}
+                height="calc(100% - 30px)"
+                theme="dark"
+                extensions={[cpp()]}
+                readOnly={true}
+                className="rounded-b-lg"
+                basicSetup={{
+                  lineNumbers: true,
+                  highlightActiveLine: false,
+                  highlightActiveLineGutter: false,
+                  foldGutter: false,
+                  dropCursor: false,
+                  allowMultipleSelections: false,
+                  indentOnInput: false,
+                  syntaxHighlighting: true,
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
