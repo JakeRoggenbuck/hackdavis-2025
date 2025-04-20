@@ -239,6 +239,40 @@ main:
     setCompilationStatus({ status: 'compiling', message: 'Analyzing code structure...' });
     
     try {
+      // Call the backend API to compile to Arduino C++
+      const arduinoResponse = await fetch('http://localhost:8080/api/compile/arduino', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      if (!arduinoResponse.ok) {
+        const errorData = await arduinoResponse.json();
+        throw new Error(`Backend error: ${errorData.error}`);
+      }
+
+      const arduinoData = await arduinoResponse.json();
+      console.log('Generated Arduino C++ code:', arduinoData.output);
+
+      // Call the backend API to compile to IR
+      const irResponse = await fetch('http://localhost:8080/api/compile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      if (!irResponse.ok) {
+        const errorData = await irResponse.json();
+        throw new Error(`Backend error: ${errorData.error}`);
+      }
+
+      const irData = await irResponse.json();
+      console.log('Generated IR:', irData.output);
+
       // Reset robot state
       setRobotState({
         x: 0,
