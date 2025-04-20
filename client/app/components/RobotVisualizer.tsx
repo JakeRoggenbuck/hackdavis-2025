@@ -30,7 +30,7 @@ interface Label {
   instructions: string[];
 }
 
-const ANIMATION_DURATION = 500; // 0.5 seconds per movement
+const ANIMATION_DURATION = 1000; // 1 second per movement
 const INSTRUCTION_DELAY = 100; // 0.1 second between instructions
 
 const Robot = ({ position, rotation }: { position: [number, number, number], rotation: number }) => {
@@ -53,7 +53,7 @@ circle:
 
 main:
     jal circle          # Call the circle function
-    mov forward, 10     # Move forward for 10 seconds
+    mov forward, 2     # Move forward for 10 seconds
     jal circle          # Call the circle function again`);
 
   const [robotState, setRobotState] = useState<AnimationState>({
