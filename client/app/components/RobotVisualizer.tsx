@@ -55,6 +55,7 @@ main:
     jal circle`);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
+  const [isLoadingCpp, setIsLoadingCpp] = useState(false);
 
   const [robotState, setRobotState] = useState<AnimationState>({
     x: 0,
@@ -237,6 +238,7 @@ main:
 
   const handleCompile = async () => {
     setCompilationStatus({ status: 'compiling', message: 'Analyzing code structure...' });
+    setIsLoadingCpp(true);
     
     try {
       // Call the backend API to compile to Arduino C++
@@ -256,6 +258,7 @@ main:
       const arduinoData = await arduinoResponse.json();
       setCppCode(arduinoData.output);
       console.log('Generated Arduino C++ code:', arduinoData.output);
+      setIsLoadingCpp(false);
 
       // Call the backend API to compile to IR
       const irResponse = await fetch('http://localhost:8080/api/compile', {
@@ -381,6 +384,11 @@ main:
             <div className="h-[30px] bg-[#1e1e1e] border-b border-[#333] flex items-center px-4">
               <span className="text-sm text-gray-300">Generated Arduino C++</span>
             </div>
+            {isLoadingCpp && (
+              <div className="absolute top-[30px] left-0 right-0 h-1 bg-[#1e1e1e] overflow-hidden">
+                <div className="h-full bg-accent animate-[loading_1s_ease-in-out]"></div>
+              </div>
+            )}
             <CodeMirror
               value={cppCode}
               height="calc(100% - 30px)"
