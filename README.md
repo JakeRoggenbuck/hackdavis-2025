@@ -18,6 +18,10 @@ A modern web-based IDE with a custom compiler backend, built for HackDavis 2025.
 
 RoboCode IDE is a cutting-edge development environment that combines the power of modern web technologies with a custom-built compiler for robotics programming. Whether you're a robotics enthusiast, student, or professional developer, our platform provides an intuitive interface for writing and executing robot control code.
 
+Here is an image of the API being called and getting the compiled code as an output.
+
+![image](https://github.com/user-attachments/assets/0a203e86-447d-4619-a39b-7b79dbec5a92)
+
 ### ✨ Key Features
 
 - 🎯 **Interactive Grid Visualization** - Real-time visual feedback of your robot's movements
