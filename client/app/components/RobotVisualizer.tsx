@@ -60,7 +60,13 @@ export default function RobotVisualizer() {
 main:
     jal circle
     mov forward, 2
-    jal circle`);
+    jal circle
+    
+    
+
+
+
+    `);
 
   const [cppCode, setCppCode] = useState<string>('// Generated Arduino C++ code will appear here');
   const [showCppCode, setShowCppCode] = useState(false);
