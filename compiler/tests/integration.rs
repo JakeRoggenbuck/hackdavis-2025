@@ -169,5 +169,8 @@ fn test_compile_invalid_syntax() {
 
     let result = compile(input);
     assert!(result.is_err());
-    assert!(result.unwrap_err().to_string().contains("Expected ',' after direction"));
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("Expected ',' after direction"));
 }
