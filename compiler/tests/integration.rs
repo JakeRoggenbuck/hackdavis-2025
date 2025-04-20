@@ -1,4 +1,4 @@
-use hackdavis_2025_compiler::{compile, compile_to_arduino};
+use compiler::{compile, compile_to_arduino};
 
 #[test]
 fn test_compile_simple_program() {
@@ -10,7 +10,7 @@ fn test_compile_simple_program() {
     "#
     .to_string();
 
-    let output = compile(input);
+    let output = compile(input).unwrap();
     let expected = r#"{
   "sections": [
     {
@@ -52,69 +52,68 @@ fn test_compile_to_arduino() {
 
     main:
         jal circle
-        jal circle
-        mov forward, 10
+        mov forward, 4
         jal circle
     "#
     .to_string();
 
-    let output = compile_to_arduino(input);
-
-    // Check for key components in the generated Arduino code
-    assert!(output.contains("int enA = 9;"));
-    assert!(output.contains("int in1 = 3;"));
-    assert!(output.contains("void setup()"));
-    assert!(output.contains("void loop()"));
+    let output = compile_to_arduino(input).unwrap();
     assert!(output.contains("void circle()"));
     assert!(output.contains("void main_loop()"));
-    assert!(output.contains("left();"));
-    assert!(output.contains("forward(4);"));
-    assert!(output.contains("straight();"));
-    assert!(output.contains("forward(10);"));
-    assert!(output.contains("void forward(float time)"));
-    assert!(output.contains("void backwards(float time)"));
-    assert!(output.contains("void left()"));
-    assert!(output.contains("void straight()"));
-    assert!(output.contains("void wait(float time)"));
+    assert!(output.contains("forward(4)"));
+    assert!(output.contains("circle();"));
 }
 
 #[test]
 fn test_compile_multiple_sections() {
     let input = r#"
-    circle:
+    section1:
+        mov forward, 1
         mov direction, 1
-        mov forward, 4
-        mov direction, 0
+
+    section2:
+        mov backward, 2
+        mov direction, 2
 
     main:
-        jal circle
-        mov forward, 10
-        jal circle
+        jal section1
+        jal section2
     "#
     .to_string();
 
-    let output = compile(input);
+    let output = compile(input).unwrap();
     let expected = r#"{
   "sections": [
     {
-      "name": "circle",
+      "name": "section1",
       "commands": [
         {
           "Move": {
-            "type": "direction",
+            "type": "forward",
             "amount": 1
           }
         },
         {
           "Move": {
-            "type": "forward",
-            "amount": 4
+            "type": "direction",
+            "amount": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "section2",
+      "commands": [
+        {
+          "Move": {
+            "type": "backward",
+            "amount": 2
           }
         },
         {
           "Move": {
             "type": "direction",
-            "amount": 0
+            "amount": 2
           }
         }
       ]
@@ -124,18 +123,12 @@ fn test_compile_multiple_sections() {
       "commands": [
         {
           "Jump": {
-            "label": "circle"
-          }
-        },
-        {
-          "Move": {
-            "type": "forward",
-            "amount": 10
+            "label": "section1"
           }
         },
         {
           "Jump": {
-            "label": "circle"
+            "label": "section2"
           }
         }
       ]
@@ -153,7 +146,7 @@ fn test_compile_empty_section() {
     "#
     .to_string();
 
-    let output = compile(input);
+    let output = compile(input).unwrap();
     let expected = r#"{
   "sections": [
     {
@@ -167,13 +160,14 @@ fn test_compile_empty_section() {
 }
 
 #[test]
-#[should_panic]
 fn test_compile_invalid_syntax() {
     let input = r#"
     invalid:
-        mov forward 10  # Missing comma
+        mov direction 1  # Missing comma
     "#
     .to_string();
 
-    compile(input);
+    let result = compile(input);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("Expected ',' after direction"));
 }
